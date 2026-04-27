@@ -9,17 +9,6 @@ jobs:
     - name: Extract ZIP
       run: unzip TriVerse_Final.zip
 
-    - name: Rename and Nuclear Fix
-      run: |
-        # Folder rename karna (Lowercase rule ke liye)
-        mv TriVerse_Final triverse_final || true
-        cd triverse_final
-        # PURANA ANDROID FOLDER DELETE KARNA (Yahi problem ki jadd hai)
-        rm -rf android
-        # NAYA ANDROID FOLDER BANANA (Latest settings ke sath)
-        flutter create . --platforms android
-        flutter pub get
-
     - name: Setup Java
       uses: actions/setup-java@v3
       with:
@@ -30,6 +19,14 @@ jobs:
       uses: subosito/flutter-action@v2
       with:
         flutter-version: '3.19.0'
+
+    - name: Rename and Nuclear Fix
+      run: |
+        mv TriVerse_Final triverse_final || true
+        cd triverse_final
+        rm -rf android
+        flutter create . --platforms android
+        flutter pub get
 
     - name: Final Build
       run: |
