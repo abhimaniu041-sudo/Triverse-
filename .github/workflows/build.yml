@@ -15,12 +15,16 @@ jobs:
     - name: Setup Flutter
       uses: subosito/flutter-action@v2
       with:
-        flutter-version: '3.13.9'
+        flutter-version: '3.19.0'
+    - name: Fix Android V1 Issue
+      run: |
+        cd TriVerse_Final
+        sed -i 's/android:name="io.flutter.app.FlutterApplication"/android:name="${applicationName}"/g' android/app/src/main/AndroidManifest.xml || true
     - name: Build APK
       run: |
         cd TriVerse_Final
         flutter pub get
-        flutter build apk --release
+        flutter build apk --release --no-tree-shake-icons
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
