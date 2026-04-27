@@ -20,7 +20,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.0'
+          flutter-version: '3.24.0'
 
       - name: Fix and Build
         run: |
@@ -31,13 +31,6 @@ jobs:
           PKG=$(grep "^package" "$MAIN_ACTIVITY" | awk '{print $2}' | tr -d ';')
           printf "package %s\n\nimport io.flutter.embedding.android.FlutterActivity\n\nclass MainActivity: FlutterActivity()\n" "$PKG" > "$MAIN_ACTIVITY"
           sed -i 's/audioplayers:.*/audioplayers: ^6.4.0/' pubspec.yaml
-          python3 -c "
-          content = open('android/app/src/main/AndroidManifest.xml').read()
-          tag = '        <meta-data android:name=\"flutterEmbedding\" android:value=\"2\"/>'
-          if 'flutterEmbedding' not in content:
-              content = content.replace('</application>', tag + '\n    </application>')
-          open('android/app/src/main/AndroidManifest.xml', 'w').write(content)
-          "
           flutter pub get
           flutter build apk --release --no-tree-shake-icons --ignore-deprecation
 
