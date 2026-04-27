@@ -1,32 +1,58 @@
 name: Build TriVerse APK
+
 on: [push]
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - name: Extract ZIP
-      run: unzip TriVerse_Final.zip
-    - name: Setup Java
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'zulu'
-        java-version: '17'
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.19.0'
-    - name: Force Migrate and Build
-      run: |
-        PROJECT_DIR=$(find . -name "pubspec.yaml" -exec dirname {} \;)
-        cd $PROJECT_DIR
-        # Purani files ko naye format mein force-convert karne ke liye
-        rm -f android/app/src/main/java/io/flutter/app/FlutterApplication.java || true
-        flutter pub get
-        # Ye command v1 ko bypass karke build karegi
-        flutter build apk --release --no-tree-shake-icons --ignore-deprecation
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: TriVerse-App-Release
-        path: '**/*.apk'
+      - uses: actions/checkout@v3
+
+      - name: Extract ZIP
+        run: unzip TriVerse_Final.zip
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+
+      - name: Force Migrate and Build
+        run: |
+          PROJECT_DIR=$(find . -name "pubspec.yaml" -exec dirname {} \;)
+          cd $PROJECT_DIR
+
+          # FlutterApplication.java delete karo
+          rm -f android/app/src/main/java/io/flutter/app/FlutterApplication.java || true
+
+          # MainActivity.kt fix - V2 embedding
+          MAIN_ACTIVITY=$(find android -name "MainActivity.kt" | head -1)
+          if [ -n "$MAIN_ACTIVITY" ]; then
+            cat > "$MAIN_ACTIVITY" << 'EOF'
+package com.example.triverse
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity: FlutterActivity() {
+}
+EOF
+          fi
+
+          # AndroidManifest fix - android:name add karo
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          sed -i 's|android:name="io.flutter.app.FlutterApplication"|android:name="${applicationName}"|g' "$MANIFEST"
+
+          # pub get + build
+          flutter pub get
+          flutter build apk --release --no-tree-shake-icons --ignore-deprecation
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: TriVerse-App-Release
+          path: '**/*.apk'
