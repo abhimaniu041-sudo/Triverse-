@@ -26,12 +26,27 @@ jobs:
         run: |
           PROJECT_DIR=$(find . -name "pubspec.yaml" -exec dirname {} \;)
           cd $PROJECT_DIR
+
+          # FlutterApplication delete
           rm -f android/app/src/main/java/io/flutter/app/FlutterApplication.java || true
+
+          # MainActivity fix
           MAIN_ACTIVITY=$(find android -name "MainActivity.kt" | head -1)
           PKG=$(grep "^package" "$MAIN_ACTIVITY" | awk '{print $2}' | tr -d ';')
           printf "package %s\n\nimport io.flutter.embedding.android.FlutterActivity\n\nclass MainActivity: FlutterActivity()\n" "$PKG" > "$MAIN_ACTIVITY"
-          sed -i 's|android:name="io.flutter.app.FlutterApplication"|android:name="${applicationName}"|g' android/app/src/main/AndroidManifest.xml || true
-          sed -i '/<\/application>/i\        <meta-data android:name="flutterEmbedding" android:value="2" />' android/app/src/main/AndroidManifest.xml
+
+          # AndroidManifest me directly flutterEmbedding add karo Python se
+          python3 -c "
+          content = open('android/app/src/main/AndroidManifest.xml').read()
+          tag = '        <meta-data android:name=\"flutterEmbedding\" android:value=\"2\"/>'
+          if 'flutterEmbedding' not in content:
+              content = content.replace('</application>', tag + '\n    </application>')
+          open('android/app/src/main/AndroidManifest.xml', 'w').write(content)
+          print('Manifest updated!')
+          "
+
+          cat android/app/src/main/AndroidManifest.xml
+
           flutter pub get
           flutter build apk --release --no-tree-shake-icons --ignore-deprecation
 
