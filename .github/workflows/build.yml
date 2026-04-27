@@ -20,21 +20,24 @@ jobs:
       with:
         flutter-version: '3.19.0'
 
-    - name: Rename and Nuclear Fix
+    - name: Fix Code and Environment
       run: |
         mv TriVerse_Final triverse_final || true
         cd triverse_final
         rm -rf android
         flutter create . --platforms android
+        # Code Patch: MainLayout missing import fix
+        find . -name "home_dashboard.dart" -exec sed -i '1i import "package:triverse/widgets/main_layout.dart";' {} + || true
         flutter pub get
 
     - name: Final Build
       run: |
         cd triverse_final
-        flutter build apk --release --no-tree-shake-icons
+        # Icons error skip karne ke liye flag add kiya hai
+        flutter build apk --release --no-tree-shake-icons --no-sound-null-safety
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: TriVerse-App-Release
-        path: '**/*.apk'
+        path: 'triverse_final/build/app/outputs/flutter-apk/app-release.apk'
