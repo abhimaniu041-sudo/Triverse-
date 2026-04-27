@@ -1,32 +1,37 @@
 name: Build TriVerse APK
-on: [push]
+
+on:
+  push:
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v3
-    - name: Extract ZIP
-      run: unzip TriVerse_Final.zip
-    - name: Setup Java
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'zulu'
-        java-version: '17'
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.19.0'
-    - name: Fix Android V1 Issue
-      run: |
-        cd TriVerse_Final
-        find . -name "AndroidManifest.xml" -exec sed -i 's/android:name="io.flutter.app.FlutterApplication"/android:name="${applicationName}"/g' {} + || true
-    - name: Build APK
-      run: |
-        cd TriVerse_Final
-        flutter pub get
-        flutter build apk --release --no-tree-shake-icons
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: TriVerse-App-Release
-        path: '**/*.apk'
+      - uses: actions/checkout@v3
+
+      - name: Extract ZIP
+        run: unzip TriVerse_Final.zip -d project
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.0'
+
+      - name: Build APK
+        run: |
+          cd project
+          flutter pub get
+          flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: TriVerse-App-Release
+          path: project/build/app/outputs/flutter-apk/app-release.apk
