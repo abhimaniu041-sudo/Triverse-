@@ -19,7 +19,7 @@ jobs:
     - name: Fix Android V1 Issue
       run: |
         cd TriVerse_Final
-        sed -i 's/android:name="io.flutter.app.FlutterApplication"/android:name="${applicationName}"/g' android/app/src/main/AndroidManifest.xml || true
+        find . -name "AndroidManifest.xml" -exec sed -i 's/android:name="io.flutter.app.FlutterApplication"/android:name="${applicationName}"/g' {} + || true
     - name: Build APK
       run: |
         cd TriVerse_Final
