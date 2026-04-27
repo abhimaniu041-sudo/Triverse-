@@ -22,32 +22,15 @@ jobs:
         with:
           flutter-version: '3.19.0'
 
-      - name: Force Migrate and Build
+      - name: Fix V2 Embedding
         run: |
           PROJECT_DIR=$(find . -name "pubspec.yaml" -exec dirname {} \;)
           cd $PROJECT_DIR
-
-          # FlutterApplication.java delete karo
           rm -f android/app/src/main/java/io/flutter/app/FlutterApplication.java || true
-
-          # MainActivity.kt fix - V2 embedding
           MAIN_ACTIVITY=$(find android -name "MainActivity.kt" | head -1)
-          if [ -n "$MAIN_ACTIVITY" ]; then
-            cat > "$MAIN_ACTIVITY" << 'EOF'
-package com.example.triverse
-
-import io.flutter.embedding.android.FlutterActivity
-
-class MainActivity: FlutterActivity() {
-}
-EOF
-          fi
-
-          # AndroidManifest fix - android:name add karo
-          MANIFEST="android/app/src/main/AndroidManifest.xml"
-          sed -i 's|android:name="io.flutter.app.FlutterApplication"|android:name="${applicationName}"|g' "$MANIFEST"
-
-          # pub get + build
+          PKG=$(grep "^package" "$MAIN_ACTIVITY" | awk '{print $2}' | tr -d ';')
+          printf "package %s\n\nimport io.flutter.embedding.android.FlutterActivity\n\nclass MainActivity: FlutterActivity()\n" "$PKG" > "$MAIN_ACTIVITY"
+          sed -i 's|android:name="io.flutter.app.FlutterApplication"|android:name="${applicationName}"|g' android/app/src/main/AndroidManifest.xml || true
           flutter pub get
           flutter build apk --release --no-tree-shake-icons --ignore-deprecation
 
