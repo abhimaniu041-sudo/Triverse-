@@ -1,41 +1,37 @@
 name: Build TriVerse APK
-
 on: [push]
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Extract ZIP
-        run: unzip TriVerse_Final.zip
-
-      - name: Setup Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.24.0'
-
-      - name: Fix and Build
-        run: |
-          PROJECT_DIR=$(find . -name "pubspec.yaml" -exec dirname {} \;)
-          cd $PROJECT_DIR
-          rm -f android/app/src/main/java/io/flutter/app/FlutterApplication.java || true
-          MAIN_ACTIVITY=$(find android -name "MainActivity.kt" | head -1)
-          PKG=$(grep "^package" "$MAIN_ACTIVITY" | awk '{print $2}' | tr -d ';')
-          printf "package %s\n\nimport io.flutter.embedding.android.FlutterActivity\n\nclass MainActivity: FlutterActivity()\n" "$PKG" > "$MAIN_ACTIVITY"
-          sed -i 's/audioplayers:.*/audioplayers: ^6.4.0/' pubspec.yaml
-          flutter pub get
-          flutter build apk --release --no-tree-shake-icons --ignore-deprecation
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: TriVerse-App-Release
-          path: '**/*.apk'
+    - uses: actions/checkout@v3
+    - name: Extract ZIP
+      run: unzip TriVerse_Final.zip
+    - name: Setup Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.19.0'
+    - name: Master Fix V1
+      run: |
+        PROJECT_DIR=$(find . -name "pubspec.yaml" -exec dirname {} \;)
+        cd $PROJECT_DIR
+        # Purani V1 file ko jad se khatam karne ke liye
+        find . -name "FlutterApplication.java" -delete || true
+        # AndroidManifest mein se purani line hatane ke liye
+        find . -name "AndroidManifest.xml" -exec sed -i 's/android:name="io.flutter.app.FlutterApplication"/android:name="${applicationName}"/g' {} + || true
+        flutter pub get
+    - name: Build APK
+      run: |
+        PROJECT_DIR=$(find . -name "pubspec.yaml" -exec dirname {} \;)
+        cd $PROJECT_DIR
+        flutter build apk --release --no-tree-shake-icons --ignore-deprecation
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: TriVerse-App-Release
+        path: '**/*.apk'
