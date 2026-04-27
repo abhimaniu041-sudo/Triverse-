@@ -9,6 +9,11 @@ jobs:
     - name: Extract ZIP
       run: unzip TriVerse_Final.zip
 
+    - name: Rename Folder for Flutter
+      run: |
+        # Folder ka naam lowercase mein badalne ke liye
+        mv TriVerse_Final triverse_final || true
+
     - name: Setup Java
       uses: actions/setup-java@v3
       with:
@@ -20,22 +25,12 @@ jobs:
       with:
         flutter-version: '3.19.0'
 
-    - name: Migrate to V2 Embedding
+    - name: Fix and Build
       run: |
-        PROJECT_DIR=$(find . -name "pubspec.yaml" -exec dirname {} \;)
-        cd $PROJECT_DIR
-        # Purani files hatane ke liye
-        rm -rf android/app/src/main/java/io/flutter/app/FlutterApplication.java || true
-        # AndroidManifest ko naye format mein update karne ke liye
-        find android -name "AndroidManifest.xml" -exec sed -i 's/android:name="io.flutter.app.FlutterApplication"/android:name="${applicationName}"/g' {} +
-        # MainActivity ko naye format mein force-fix karne ke liye
-        flutter create . --platforms android
+        cd triverse_final
+        # V1 to V2 migration settings
+        find . -name "AndroidManifest.xml" -exec sed -i 's/android:name="io.flutter.app.FlutterApplication"/android:name="${applicationName}"/g' {} + || true
         flutter pub get
-
-    - name: Build APK
-      run: |
-        PROJECT_DIR=$(find . -name "pubspec.yaml" -exec dirname {} \;)
-        cd $PROJECT_DIR
         flutter build apk --release --no-tree-shake-icons
 
     - name: Upload APK
