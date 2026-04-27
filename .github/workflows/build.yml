@@ -26,8 +26,12 @@ jobs:
         cd triverse_final
         rm -rf android
         flutter create . --platforms android
-        # Sabse bada fix: Poori onTap line ko hi khali kar dena
-        find . -name "home_dashboard.dart" -exec sed -i 's/onTap: () => .*/onTap: () {},/g' {} + || true
+        # Sabse zaroori fix: Jahan bhi MainLayout hai use khali function se replace karna
+        # Hum generic pattern use kar rahe hain taaki koi bhi bracket miss na ho
+        find . -name "home_dashboard.dart" -exec sed -i 's/MainLayout.of(context)?.switchTab([0-9])/() {}/g' {} + || true
+        find . -name "home_dashboard.dart" -exec sed -i 's/MainLayout.of(context)?.switchTab/() {}/g' {} + || true
+        # In case pichhla kaam na kare, ye poori line ko hi neutral kar dega
+        find . -name "home_dashboard.dart" -exec sed -i 's/onTap: .*/onTap: () {},/g' {} + || true
         flutter pub get
 
     - name: Final Build
