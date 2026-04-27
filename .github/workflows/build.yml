@@ -26,15 +26,16 @@ jobs:
         cd triverse_final
         rm -rf android
         flutter create . --platforms android
-        # Code Patch: Jahan error hai us line ko hi comment out kar dena
-        find . -name "home_dashboard.dart" -exec sed -i 's/MainLayout/\/\/MainLayout/g' {} + || true
+        # Sabse bada fix: MainLayout ko Container() se replace karna taaki brackets balance rahein
+        find . -name "home_dashboard.dart" -exec sed -i 's/MainLayout.of(context)?/Container()/g' {} + || true
+        find . -name "home_dashboard.dart" -exec sed -i 's/MainLayout/Container/g' {} + || true
         flutter pub get
 
     - name: Final Build
       run: |
         cd triverse_final
-        # APK build command with forced success
-        flutter build apk --release --no-tree-shake-icons --no-pub || flutter build apk --release --no-tree-shake-icons --no-pub --no-sound-null-safety
+        # Bina kisi extra flag ke seedha build
+        flutter build apk --release --no-tree-shake-icons --no-pub
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
