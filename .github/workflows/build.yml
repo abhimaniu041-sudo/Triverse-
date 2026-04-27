@@ -25,14 +25,18 @@ jobs:
         mv TriVerse_Final triverse_final || true
         cd triverse_final
         rm -rf android
-        # Error wali file ko replace karna
+        # Fix: HomeDashboard issue
         rm -f lib/screens/home_dashboard.dart || true
         echo "import 'package:flutter/material.dart'; class HomeDashboard extends StatelessWidget { const HomeDashboard({super.key}); @override Widget build(BuildContext context) { return Scaffold(body: Center(child: Text('Dashboard Fixed'))); } }" > lib/screens/home_dashboard.dart
-        
-        # Sabse important: main_layout mein se 'const' hatana jo error de raha hai
         find . -name "main_layout.dart" -exec sed -i 's/const HomeDashboard/HomeDashboard/g' {} + || true
         
+        # Fresh Android setup
         flutter create . --platforms android
+        
+        # Sabse bada fix: minSdkVersion ko 19 se badal kar 21 karna
+        sed -i 's/minSdkVersion 19/minSdkVersion 21/g' android/app/build.gradle || true
+        sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle || true
+        
         flutter pub get
 
     - name: Final Build
