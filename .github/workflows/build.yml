@@ -31,6 +31,7 @@ jobs:
           PKG=$(grep "^package" "$MAIN_ACTIVITY" | awk '{print $2}' | tr -d ';')
           printf "package %s\n\nimport io.flutter.embedding.android.FlutterActivity\n\nclass MainActivity: FlutterActivity()\n" "$PKG" > "$MAIN_ACTIVITY"
           sed -i 's|android:name="io.flutter.app.FlutterApplication"|android:name="${applicationName}"|g' android/app/src/main/AndroidManifest.xml || true
+          sed -i '/<\/application>/i\        <meta-data android:name="flutterEmbedding" android:value="2" />' android/app/src/main/AndroidManifest.xml
           flutter pub get
           flutter build apk --release --no-tree-shake-icons --ignore-deprecation
 
