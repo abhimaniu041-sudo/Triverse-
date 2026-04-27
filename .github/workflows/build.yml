@@ -22,31 +22,32 @@ jobs:
         with:
           flutter-version: '3.19.0'
 
-      - name: Fix V2 Embedding
+      - name: Fix and Build
         run: |
           PROJECT_DIR=$(find . -name "pubspec.yaml" -exec dirname {} \;)
           cd $PROJECT_DIR
 
-          # FlutterApplication delete
+          # Step 1: FlutterApplication delete
           rm -f android/app/src/main/java/io/flutter/app/FlutterApplication.java || true
 
-          # MainActivity fix
+          # Step 2: MainActivity fix
           MAIN_ACTIVITY=$(find android -name "MainActivity.kt" | head -1)
           PKG=$(grep "^package" "$MAIN_ACTIVITY" | awk '{print $2}' | tr -d ';')
           printf "package %s\n\nimport io.flutter.embedding.android.FlutterActivity\n\nclass MainActivity: FlutterActivity()\n" "$PKG" > "$MAIN_ACTIVITY"
 
-          # AndroidManifest me directly flutterEmbedding add karo Python se
+          # Step 3: audioplayers version downgrade in pubspec.yaml
+          sed -i 's/audioplayers:.*/audioplayers: ^1.1.1/' pubspec.yaml
+
+          # Step 4: Manifest fix
           python3 -c "
           content = open('android/app/src/main/AndroidManifest.xml').read()
           tag = '        <meta-data android:name=\"flutterEmbedding\" android:value=\"2\"/>'
           if 'flutterEmbedding' not in content:
               content = content.replace('</application>', tag + '\n    </application>')
           open('android/app/src/main/AndroidManifest.xml', 'w').write(content)
-          print('Manifest updated!')
           "
 
-          cat android/app/src/main/AndroidManifest.xml
-
+          # Step 5: Build
           flutter pub get
           flutter build apk --release --no-tree-shake-icons --ignore-deprecation
 
