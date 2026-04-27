@@ -26,19 +26,11 @@ jobs:
         run: |
           PROJECT_DIR=$(find . -name "pubspec.yaml" -exec dirname {} \;)
           cd $PROJECT_DIR
-
-          # Step 1: FlutterApplication delete
           rm -f android/app/src/main/java/io/flutter/app/FlutterApplication.java || true
-
-          # Step 2: MainActivity fix
           MAIN_ACTIVITY=$(find android -name "MainActivity.kt" | head -1)
           PKG=$(grep "^package" "$MAIN_ACTIVITY" | awk '{print $2}' | tr -d ';')
           printf "package %s\n\nimport io.flutter.embedding.android.FlutterActivity\n\nclass MainActivity: FlutterActivity()\n" "$PKG" > "$MAIN_ACTIVITY"
-
-          # Step 3: audioplayers version downgrade in pubspec.yaml
-          sed -i 's/audioplayers:.*/audioplayers: ^1.1.1/' pubspec.yaml
-
-          # Step 4: Manifest fix
+          sed -i 's/audioplayers:.*/audioplayers: ^6.4.0/' pubspec.yaml
           python3 -c "
           content = open('android/app/src/main/AndroidManifest.xml').read()
           tag = '        <meta-data android:name=\"flutterEmbedding\" android:value=\"2\"/>'
@@ -46,8 +38,6 @@ jobs:
               content = content.replace('</application>', tag + '\n    </application>')
           open('android/app/src/main/AndroidManifest.xml', 'w').write(content)
           "
-
-          # Step 5: Build
           flutter pub get
           flutter build apk --release --no-tree-shake-icons --ignore-deprecation
 
