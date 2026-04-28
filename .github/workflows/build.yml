@@ -22,7 +22,7 @@ jobs:
         with:
           flutter-version: '3.22.0'
 
-      - name: Restore & Repair Project
+      - name: Hardcode Fix & Build
         run: |
           # 1. Fresh Framework
           flutter create . --platforms android --overwrite --project-name triverse_app
@@ -30,18 +30,17 @@ jobs:
           # 2. Extract Premium Code
           unzip -o triverse_final.zip
           
-          # 3. FIX GRADLE (The precise way)
-          # Hum sirf Kotlin version update karenge, poori file replace nahi karenge
-          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.10"/g' android/build.gradle || true
+          # 3. Force Version Fix (Direct Injection)
+          # Hum direct build.gradle file ke andar version 1.9.10 likh rahe hain
+          sed -i "s/ext.kotlin_version = '.*'/ext.kotlin_version = '1.9.10'/g" android/build.gradle
+          sed -i 's/kotlin("android") version ".*"/kotlin("android") version "1.9.10"/g' android/settings.gradle || true
           
-          # 4. Add Essential Packages
+          # 4. Essential Packages
           flutter pub add provider razorpay_flutter firebase_core firebase_auth cloud_functions
 
-      - name: Final Compilation
+      - name: Compilation
         run: |
           flutter pub get
-          # Fixing a common Gradle mismatch on the fly
-          cd android
-          ./gradlew clean || true
-          cd ..
+          # Extra step to ensure Gradle doesn't use old cache
+          cd android && ./gradlew clean && cd ..
           flutter build apk --release --no-tree-shake-icons
