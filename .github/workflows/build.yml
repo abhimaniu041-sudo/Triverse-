@@ -28,11 +28,11 @@ jobs:
         with:
           flutter-version: '3.22.0'
 
-      - name: Total Android System Overwrite
+      - name: Force System Overwrite
         run: |
           cd triverse_final
           
-          # 1. Lib backup
+          # 1. Backup lib (Permanent Fix for Demo Page)
           cp -r lib lib_permanent_backup
           
           # 2. Fresh Android Structure
@@ -42,9 +42,11 @@ jobs:
           rm -rf lib
           mv lib_permanent_backup lib
           
-          # 4. THE KOTLIN FIX (Direct Overwrite)
-          # Hum line-by-line file hi nayi bana rahe hain taaki koi galti na ho
-          echo "buildscript {
+          # 4. THE KOTLIN SURGICAL STRIKE (Fixes Screenshot Error)
+          # Purani file delete karke ekdum fresh build.gradle likh rahe hain
+          rm android/build.gradle
+          cat <<EOF > android/build.gradle
+          buildscript {
               ext.kotlin_version = '1.9.10'
               repositories {
                   google()
@@ -52,7 +54,7 @@ jobs:
               }
               dependencies {
                   classpath 'com.android.tools.build:gradle:8.1.0'
-                  classpath \"org.jetbrains.kotlin:kotlin-gradle-plugin:\$kotlin_version\"
+                  classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:\$kotlin_version"
                   classpath 'com.google.gms:google-services:4.3.15'
               }
           }
@@ -64,14 +66,15 @@ jobs:
           }
           rootProject.buildDir = '../build'
           subprojects {
-              project.buildDir = \"\${rootProject.buildDir}/\${project.name}\"
+              project.buildDir = "\${rootProject.buildDir}/\${project.name}"
           }
           subprojects {
               project.evaluationDependsOn(':app')
           }
-          tasks.register(\"clean\", Delete) {
+          tasks.register("clean", Delete) {
               delete rootProject.buildDir
-          }" > android/build.gradle
+          }
+          EOF
 
           # 5. MainActivity Cleanup
           find android/app/src/main -name "MainActivity.*" -delete
@@ -81,14 +84,12 @@ jobs:
           class MainActivity: FlutterActivity() {
           }' > android/app/src/main/kotlin/com/abhimaniu/triverse/MainActivity.kt
 
-          # 6. Firebase Setup
+          # 6. Firebase & SDK Fix
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
-          
-          # 7. SDK Fix (minSdkVersion 21)
           sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           
-          # 8. Force Dependencies
+          # 7. Package Sync
           flutter pub add firebase_core firebase_auth cloud_firestore cloud_functions google_generative_ai razorpay_flutter fl_chart:0.66.0 provider
           flutter pub get
 
@@ -100,5 +101,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Final-Working-App
+          name: TriVerse-Final-Success
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
