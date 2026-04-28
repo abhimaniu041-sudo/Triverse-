@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Extract and Rename
         run: |
@@ -28,23 +30,19 @@ jobs:
         with:
           flutter-version: '3.19.0'
 
-      - name: The Ultimate Fix (No Overwrite)
+      - name: The Nuclear Fix
         run: |
           cd triverse_final
           
-          # 1. Android folder saaf karo (Fresh start)
-          rm -rf android
-          
-          # 2. Fresh Android Structure (Embedding & Version fix)
+          # 1. Fresh Android setup (Embedding fix)
           flutter create . --platforms android --overwrite
           
-          # 3. Restore ORIGINAL Design (Demo Page se bachne ke liye)
-          # Hum GitHub se asli files wapas khinchenge
+          # 2. FORCE RESTORE: GitHub se asli premium code wapas kheencho
+          # Isse demo page kabhi nahi aayega
           git checkout HEAD -- lib/
-          git checkout HEAD -- assets/ || true
-          git checkout HEAD -- pubspec.yaml || true
+          git checkout HEAD -- pubspec.yaml
           
-          # 4. Modern MainActivity Fix
+          # 3. MainActivity Cleanup
           find android/app/src/main -name "MainActivity.*" -delete
           mkdir -p android/app/src/main/kotlin/com/abhimaniu/triverse
           echo 'package com.abhimaniu.triverse
@@ -52,15 +50,14 @@ jobs:
           class MainActivity: FlutterActivity() {
           }' > android/app/src/main/kotlin/com/abhimaniu/triverse/MainActivity.kt
 
-          # 5. Firebase Setup
+          # 4. Firebase Setup
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           
-          # 6. SDK Fix (Razorpay Fix)
+          # 5. Version Fix
           sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           
-          # 7. Library Linking (No-Bypass Mode)
-          flutter pub clean
+          # 6. Fresh Packages
           flutter pub get
 
       - name: Build APK
@@ -71,5 +68,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Premium-Original
+          name: TriVerse-Premium-Original-App
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
