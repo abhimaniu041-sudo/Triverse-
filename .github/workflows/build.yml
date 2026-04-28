@@ -1,4 +1,4 @@
-name: Build TriVerse Premium APK
+name: Build TriVerse Final Premium
 
 on:
   push:
@@ -12,56 +12,39 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Java
+      - name: Setup Java & Flutter
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
-
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.22.0'
 
-      - name: Inject Code & Fix Kotlin Version
+      - name: Fast Inject & Kotlin Fix
         run: |
           # 1. Framework create karo
-          flutter create triverse_app --platforms android --project-name triverse_app
+          flutter create . --platforms android --overwrite --project-name triverse_app
           
-          # 2. Extract your zip
-          unzip -o triverse_final.zip -d temp_folder
+          # 2. ZIP Extract karo
+          unzip -o triverse_final.zip
           
-          # 3. Replace lib folder
-          rm -rf triverse_app/lib
-          if [ -d "temp_folder/triverse_final/lib" ]; then
-            cp -r temp_folder/triverse_final/lib triverse_app/lib
-          elif [ -d "temp_folder/TriVerse_Final/lib" ]; then
-            cp -r temp_folder/TriVerse_Final/lib triverse_app/lib
-          else
-            cp -r temp_folder/lib triverse_app/lib
-          fi
-
-          # 4. FORCE UPDATE KOTLIN & GRADLE (The Fix)
-          cd triverse_app
-          # Kotlin version ko 1.9.0 par force kar rahe hain
+          # 3. KOTLIN FORCE UPDATE (Sabse important step)
+          # Ye line android folder ki build.gradle mein jaakar version update kar degi
           sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.0"/g' android/build.gradle || true
-          sed -i 's/kotlin("android") version .*/kotlin("android") version "1.9.0"/g' android/settings.gradle || true
           
-          # Essential Libraries
-          flutter pub add razorpay_flutter firebase_core firebase_auth cloud_functions provider fl_chart:0.68.0
+          # 4. Essential Libraries add karo
+          flutter pub add provider razorpay_flutter firebase_core firebase_auth cloud_functions
 
-      - name: Build Final APK
+      - name: Speed Build APK
         run: |
-          cd triverse_app
           flutter pub get
-          # Fixing specific code errors to prevent stopping
-          find lib/ -name "*.dart" -exec sed -i 's/PaymentSuccessResponse/dynamic/g' {} + || true
-          find lib/ -name "*.dart" -exec sed -i 's/PaymentFailureResponse/dynamic/g' {} + || true
-          
-          flutter build apk --release --no-tree-shake-icons
+          # Fast mode: parallel processing on
+          flutter build apk --release --no-tree-shake-icons --split-per-abi
 
-      - name: Upload Verified Premium APK
+      - name: Upload Premium APK
         uses: actions/upload-artifact@v4
         with:
           name: TriVerse-Premium-Final
-          path: triverse_app/build/app/outputs/flutter-apk/*.apk
+          path: build/app/outputs/flutter-apk/*.apk
