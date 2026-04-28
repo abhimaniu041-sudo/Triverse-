@@ -1,0 +1,88 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Users
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow list: if isAdmin();
+
+      // Self-update only the fcmTokens + lastTokenUpdate fields
+      allow update: if request.auth != null &&
+        request.auth.uid == userId &&
+        request.resource.data.diff(resource.data)
+          .affectedKeys()
+          .hasOnly(['fcmTokens', 'lastTokenUpdate']);
+
+      allow create: if request.auth != null &&
+        request.auth.uid == userId &&
+        request.resource.data.keys().hasOnly(['fcmTokens', 'lastTokenUpdate']);
+
+      allow write: if isAdmin();
+    }
+
+    // Apps (generated projects metadata)
+    match /apps/{appId} {
+      allow read, create: if request.auth != null &&
+        request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null &&
+        resource.data.userId == request.auth.uid;
+      allow list: if isAdmin();
+    }
+
+    // Tickets
+    match /tickets/{ticketId} {
+      allow create: if request.auth != null &&
+        request.resource.data.userId == request.auth.uid;
+
+      allow read: if request.auth != null && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+
+      allow list: if isAdmin() || request.auth != null;
+
+      // Allow owner to reset userUnread OR admin to reset adminUnread / update status / etc.
+      allow update: if request.auth != null && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+
+      match /messages/{messageId} {
+        allow create: if request.auth != null && (
+          (get(/databases/$(database)/documents/tickets/$(ticketId)).data.userId == request.auth.uid &&
+            request.resource.data.role in ['user', 'assistant']) ||
+          (isAdmin() && request.resource.data.role == 'admin')
+        );
+        allow read: if request.auth != null && (
+          get(/databases/$(database)/documents/tickets/$(ticketId)).data.userId == request.auth.uid ||
+          isAdmin()
+        );
+      }
+    }
+
+    // AI Logs — read by admin only, written by Cloud Functions (admin SDK bypasses)
+    match /aiLogs/{logId} {
+      allow read, list: if isAdmin();
+      allow write: if false; // only Cloud Functions can write
+    }
+
+    // Orders — user reads own; Cloud Functions write
+    match /orders/{orderId} {
+      allow read: if request.auth != null && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+      allow list: if isAdmin();
+      allow write: if false;
+    }
+
+    // Global config — anyone authed can read (used by client); admin UI writes via Cloud Function
+    match /config/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+  }
+}

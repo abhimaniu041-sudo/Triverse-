@@ -1,0 +1,30 @@
+import 'package:google_generative_ai/google_generative_ai.dart';
+import 'gemini_service.dart';
+
+/// Multi-turn chat powered by Gemini.
+/// Keeps conversation history in memory and calls Gemini for each user turn.
+class SupportChatService {
+  static const _systemPrompt =
+      'You are the TriVerse AI Support Manager. TriVerse is a premium mobile app that lets users generate Flutter apps/games using AI (Brahma Hub), manage generated apps (Vishnu Hub), and control their account (Shiva Panel). Users start with 7 credits and can earn 2 credits daily. Full app generation costs 100 credits, games cost 70. Credits can be bought (₹50/100/200/500 plans). Each user has a ₹1000 hard usage cap. Your job: answer questions about these features, help troubleshoot payment issues, credit queries, login problems, and generation errors. Be concise, friendly, and reply in the same language the user uses (English/Hindi/Hinglish). If you cannot resolve, say you are creating a support ticket for human review.';
+
+  final GenerativeModel _model;
+  late final ChatSession _chat;
+
+  SupportChatService()
+      : _model = GenerativeModel(
+          model: 'gemini-1.5-flash',
+          apiKey: GeminiService.apiKey,
+          systemInstruction: Content.system(_systemPrompt),
+        ) {
+    _chat = _model.startChat();
+  }
+
+  Future<String> sendMessage(String userText) async {
+    try {
+      final response = await _chat.sendMessage(Content.text(userText));
+      return response.text ?? 'Sorry, I could not generate a reply.';
+    } catch (e) {
+      return 'Error reaching AI: $e';
+    }
+  }
+}
