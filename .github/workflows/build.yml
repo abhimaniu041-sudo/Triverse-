@@ -28,32 +28,40 @@ jobs:
         with:
           flutter-version: '3.19.0'
 
-      - name: Force Original Code Only
+      - name: Surgical V2 Migration & Fix
         run: |
           cd triverse_final
           
-          # 1. Pubspec ko overwrite hone se roko
-          flutter pub get
+          # 1. Force V2 Embedding (Fixes Line 196 in screenshot)
+          # Hum sirf android folder ko refresh karenge bina lib/main.dart ko touch kiye
+          flutter create . --platforms android --overwrite
           
-          # 2. Android folder fix (Bina pura project mitaaye)
-          # Hum sirf wo files inject karenge jo build ko 'com.abhimaniu.triverse' dikhayein
+          # 2. Re-Restore Original lib (Just in case flutter create touched it)
+          # Isse demo page ka naam-o-nishaan mit jayega
+          unzip -o ../TriVerse_Final.zip
+          mv TriVerse_Final/* . || true
+          
+          # 3. MainActivity Cleanup (V2 format)
+          find android/app/src/main -name "MainActivity.*" -delete
           mkdir -p android/app/src/main/kotlin/com/abhimaniu/triverse
           echo 'package com.abhimaniu.triverse
           import io.flutter.embedding.android.FlutterActivity
           class MainActivity: FlutterActivity() {
           }' > android/app/src/main/kotlin/com/abhimaniu/triverse/MainActivity.kt
 
-          # 3. Firebase Config
+          # 4. Firebase Config
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           
-          # 4. Final SDK Check
+          # 5. SDK Fix
           sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
+          
+          # 6. Fresh Packages
+          flutter pub get
 
       - name: Build APK (The Real One)
         run: |
           cd triverse_final
-          # Is baar hum --no-clean use karenge taaki files safe rahein
           flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK
