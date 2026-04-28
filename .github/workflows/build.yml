@@ -1,6 +1,50 @@
-- name: Build Android APK
+name: Build TriVerse APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Unzip project
+        run: unzip -o TriVerse_Final.zip
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
         run: |
-          # Pehle gradlew file ko dhoondo aur uske folder mein jao
+          PACKAGE_PATH=$(find . -name "package.json" -not -path "*/node_modules/*" -print -quit)
+          PACKAGE_DIR=$(dirname "$PACKAGE_PATH")
+          cd "$PACKAGE_DIR"
+          npm install
+
+      - name: Create google-services.json
+        run: |
+          ANDROID_APP_PATH=$(find . -type d -name "app" | grep "android/app" | head -n 1)
+          if [ -n "$ANDROID_APP_PATH" ]; then
+            echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > "$ANDROID_APP_PATH/google-services.json"
+          else
+            echo "Error: Android app folder not found"
+            exit 1
+          fi
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Build Android APK
+        run: |
           GRADLE_PATH=$(find . -name gradlew -print -quit)
           GRADLE_DIR=$(dirname "$GRADLE_PATH")
           cd "$GRADLE_DIR"
