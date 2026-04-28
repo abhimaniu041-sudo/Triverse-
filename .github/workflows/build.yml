@@ -1,4 +1,4 @@
-name: Build TriVerse Final Fix
+name: TriVerse Ultimate Recovery Build
 on:
   push:
     branches: [ main ]
@@ -8,15 +8,57 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Force Organize Project Structure
+        run: |
+          # 1. Zaruri folders banao
+          mkdir -p lib/services
+          mkdir -p android/app/src/main/kotlin/com/example/triverse
+
+          # 2. Files ko unki sahi jagah move karo (Bina Folder ke upload ki hui files)
+          mv main.dart lib/ 2>/dev/null || true
+          mv app_state.dart lib/ 2>/dev/null || true
+          mv firebase_options.dart lib/ 2>/dev/null || true
+          mv support_chat_service.dart lib/services/ 2>/dev/null || true
+          mv gemini_service.dart lib/services/ 2>/dev/null || true
+          mv auth_service.dart lib/services/ 2>/dev/null || true
+          mv *_screen.dart lib/ 2>/dev/null || true
+          mv *_hub.dart lib/ 2>/dev/null || true
+          mv *_panel.dart lib/ 2>/dev/null || true
+          mv main_layout.dart lib/ 2>/dev/null || true
+          mv payment_service.dart lib/services/ 2>/dev/null || true
+          mv firestore_service.dart lib/services/ 2>/dev/null || true
+          mv fcm_service.dart lib/services/ 2>/dev/null || true
+          mv zip_service.dart lib/services/ 2>/dev/null || true
+
+          # 3. Android V1 to V2 Embedding Fix (Auto-Patch)
+          mv MainActivity.kt android/app/src/main/kotlin/com/example/triverse/ 2>/dev/null || true
+          mv AndroidManifest.xml android/app/src/main/ 2>/dev/null || true
+
+          # 4. Patch AndroidManifest for V2 Embedding
+          if [ -f android/app/src/main/AndroidManifest.xml ]; then
+            sed -i 's/io.flutter.app.FlutterApplication/${applicationName}/g' android/app/src/main/AndroidManifest.xml
+          fi
+
+      - name: Setup Java & Flutter
+        uses: actions/setup-java@v4
         with:
-          flutter-version: '3.19.0' # Stable version for your project
+          distribution: 'zulu'
+          java-version: '17'
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0' # Stable for your old structure
+
       - name: Build APK
         run: |
           flutter pub get
           flutter build apk --release --no-tree-shake-icons
-      - uses: actions/upload-artifact@v4
+
+      - name: Upload Final APK
+        uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-APK
+          name: TriVerse-Final-APK
           path: build/app/outputs/flutter-apk/app-release.apk
