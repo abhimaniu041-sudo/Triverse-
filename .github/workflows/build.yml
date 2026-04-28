@@ -28,22 +28,22 @@ jobs:
         with:
           flutter-version: '3.22.0'
 
-      - name: Hard System Lock Fix
+      - name: Total System Overwrite
         run: |
           cd triverse_final
           
-          # 1. Permanent Backup of Premium lib
+          # 1. Design Backup
           cp -r lib lib_permanent_backup
           
-          # 2. Fresh Android Setup (Ye purani settings mita deta hai)
+          # 2. Fresh Android Structure (Ye sab settings mita deta hai)
           flutter create . --platforms android --overwrite
           
-          # 3. Restore ORIGINAL Premium Design
+          # 3. Restore ORIGINAL Design
           rm -rf lib
           mv lib_permanent_backup lib
           
-          # 4. THE KOTLIN LOCK (Fixes line 1863 in screenshot)
-          # Hum direct 'cat' command se file ko force-write kar rahe hain
+          # 4. THE KOTLIN FIX (Directly Overwriting the problematic file)
+          # Isse line 1863 wala error hamesha ke liye khatam ho jayenge
           rm -f android/build.gradle
           cat << 'EOF' > android/build.gradle
           buildscript {
@@ -76,7 +76,24 @@ jobs:
           }
           EOF
 
-          # 5. MainActivity Cleanup
+          # 5. Settings.gradle Fix (Force stable version)
+          rm -f android/settings.gradle
+          cat << 'EOF' > android/settings.gradle
+          include ':app'
+          def flutterProjectRoot = rootProject.projectDir.parentFile.toPath()
+          def plugins = new Properties()
+          def pluginsFile = new File(flutterProjectRoot.toFile(), '.flutter-plugins')
+          if (pluginsFile.exists()) {
+              pluginsFile.withReader('UTF-8') { reader -> plugins.load(reader) }
+          }
+          plugins.each { name, path ->
+              def pluginDirectory = flutterProjectRoot.resolve(path).resolve('android').toFile()
+              include ":$name"
+              project(":$name").projectDir = pluginDirectory
+          }
+          EOF
+
+          # 6. MainActivity Cleanup
           find android/app/src/main -name "MainActivity.*" -delete
           mkdir -p android/app/src/main/kotlin/com/abhimaniu/triverse
           echo 'package com.abhimaniu.triverse
@@ -84,12 +101,12 @@ jobs:
           class MainActivity: FlutterActivity() {
           }' > android/app/src/main/kotlin/com/abhimaniu/triverse/MainActivity.kt
 
-          # 6. Firebase & SDK Config
+          # 7. Firebase & SDK Fix
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           
-          # 7. Package Force-Add
+          # 8. Force Dependencies
           flutter pub add firebase_core firebase_auth cloud_firestore firebase_storage cloud_functions google_generative_ai razorpay_flutter fl_chart:0.66.0 provider
           flutter pub get
 
@@ -101,5 +118,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Premium-Original
+          name: TriVerse-Premium-Original-Final
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
