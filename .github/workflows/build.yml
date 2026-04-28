@@ -22,21 +22,35 @@ jobs:
         with:
           flutter-version: '3.24.0'
 
-      - name: Prepare & Build
+      - name: Force Inject TriVerse Code
         run: |
+          # 1. Fresh Framework
           flutter create . --platforms android --overwrite --project-name triverse_app
-          unzip -o triverse_final.zip || true
           
-          # Kotlin/Gradle Fixes
+          # 2. DELETE DEMO CONTENT
+          rm -rf lib/*
+          
+          # 3. Extract TriVerse Real Code
+          unzip -o triverse_final.zip
+          
+          # 4. Critical: Ensure code is in the right place
+          # Agar zip ke andar 'lib' folder hai, toh hum use main directory mein laa rahe hain
+          if [ -d "triverse_final/lib" ]; then
+            cp -r triverse_final/lib/* lib/
+          elif [ -d "TriVerse_Final/lib" ]; then
+            cp -r TriVerse_Final/lib/* lib/
+          fi
+
+          # 5. Fix Android Gradle & Kotlin (For the last time!)
           sed -i 's/gradle-7.6.3-all.zip/gradle-8.0-all.zip/g' android/gradle/wrapper/gradle-wrapper.properties || true
           
+      - name: Build TriVerse APK
+        run: |
           flutter pub get
           flutter build apk --release --no-tree-shake-icons
 
-      - name: Upload APK Artifact
+      - name: Upload TriVerse APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-App-Package
-          # Ye path ab har tarah ki APK ko pakad lega
+          name: TriVerse-Verified-APK
           path: build/app/outputs/flutter-apk/*.apk
-          if-no-files-found: error
