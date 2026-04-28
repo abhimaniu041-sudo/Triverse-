@@ -12,6 +12,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Unzip project
+        run: unzip -o TriVerse_Final.zip
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -19,9 +22,6 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-
-      - name: Unzip project
-        run: unzip -o TriVerse_Final.zip
 
       - name: Create google-services.json
         run: |
