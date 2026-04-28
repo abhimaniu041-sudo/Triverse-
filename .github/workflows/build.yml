@@ -1,51 +1,45 @@
 name: Build TriVerse APK
-on: [push]
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Extract ZIP
-      run: unzip TriVerse_Final.zip
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Setup Java
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'zulu'
-        java-version: '17'
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
 
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.19.0'
+      - name: Install dependencies
+        run: npm install
 
-    - name: Nuclear Fix Environment
-      run: |
-        mv TriVerse_Final triverse_final || true
-        cd triverse_final
-        rm -rf android
-        # Fix: HomeDashboard issue
-        rm -f lib/screens/home_dashboard.dart || true
-        echo "import 'package:flutter/material.dart'; class HomeDashboard extends StatelessWidget { const HomeDashboard({super.key}); @override Widget build(BuildContext context) { return Scaffold(body: Center(child: Text('Dashboard Fixed'))); } }" > lib/screens/home_dashboard.dart
-        find . -name "main_layout.dart" -exec sed -i 's/const HomeDashboard/HomeDashboard/g' {} + || true
-        
-        # Fresh Android setup
-        flutter create . --platforms android
-        
-        # Sabse bada fix: minSdkVersion ko 19 se badal kar 21 karna
-        sed -i 's/minSdkVersion 19/minSdkVersion 21/g' android/app/build.gradle || true
-        sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle || true
-        
-        flutter pub get
+      - name: Unzip project
+        run: unzip -o TriVerse_Final.zip
 
-    - name: Final Build
-      run: |
-        cd triverse_final
-        flutter build apk --release --no-tree-shake-icons --no-pub
+      - name: Create google-services.json
+        run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: TriVerse-App-Release
-        path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '11'
+
+      - name: Build Android APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: triverse-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
