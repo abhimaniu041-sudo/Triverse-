@@ -22,44 +22,43 @@ jobs:
         with:
           flutter-version: '3.24.0'
 
-      - name: Manual Force Repair
+      - name: Hard Force Gradle & Kotlin
         run: |
           # 1. Framework Fresh Start
           flutter create . --platforms android --overwrite --project-name triverse_app
           
-          # 2. Extract Premium Code
+          # 2. Force Update Gradle Wrapper (The 8.0 Fix)
+          cd android
+          sed -i 's/gradle-7.6.3-all.zip/gradle-8.0-all.zip/g' gradle/wrapper/gradle-wrapper.properties
+          cd ..
+
+          # 3. Extract Premium Code
           unzip -o triverse_final.zip
           
-          # 3. FORCE SETTINGS.GRADLE (The Fix for 'org.jetbrains.kotlin.android')
+          # 4. Final Settings Fix
           cat <<EOF > android/settings.gradle
           pluginManagement {
               def flutterSdkPath = {
                   def properties = new Properties()
                   file("local.properties").withInputStream { properties.load(it) }
                   def flutterSdkPath = properties.getProperty("flutter.sdk")
-                  assert flutterSdkPath != null, "flutter.sdk not set in local.properties"
                   return flutterSdkPath
               }()
               includeBuild("\$flutterSdkPath/packages/flutter_tools/gradle")
-              repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
+              repositories { google(); mavenCentral(); gradlePluginPortal() }
           }
           plugins {
               id "dev.flutter.flutter-gradle-plugin" version "1.0.0" apply false
               id "com.android.application" version "8.1.0" apply false
               id "org.jetbrains.kotlin.android" version "1.9.10" apply false
-              id "com.google.gms.google-services" version "4.3.15" apply false
           }
           include ":app"
           EOF
 
-          # 4. Add Essential Packages
+          # 5. Packages
           flutter pub add provider razorpay_flutter firebase_core firebase_auth cloud_functions
 
-      - name: Final Build
+      - name: Final Compilation
         run: |
           flutter pub get
           cd android && ./gradlew clean && cd ..
