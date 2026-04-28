@@ -1,6 +1,3 @@
-package com.example.triverse // Apna sahi package name check kar lena
-
+package com.example.triverse
 import io.flutter.embedding.android.FlutterActivity
-
-class MainActivity: FlutterActivity() {
-}
+class MainActivity: FlutterActivity() { }
