@@ -13,7 +13,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Extract ZIP
-        run: unzip -o TriVerse_Final.zip
+        run: |
+          unzip -o TriVerse_Final.zip
+          # Folder ka naam badal kar lowercase kar rahe hain taaki Flutter gussa na ho
+          mv TriVerse_Final triverse_final || true
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -28,13 +31,12 @@ jobs:
 
       - name: Fix Embedding & Firebase
         run: |
-          cd TriVerse_Final
+          cd triverse_final
           
-          # 1. Force modern Android structure
-          flutter create . --platforms android --overwrite
+          # 1. Force modern Android structure (No Overwrite to protect your code)
+          flutter create . --platforms android
           
           # 2. Modern MainActivity Fix (v2 embedding)
-          # Ye command dhoond kar MainActivity ko update kar degi
           FILE_PATH=$(find . -name "MainActivity.kt" -print -quit)
           if [ -z "$FILE_PATH" ]; then
             FILE_PATH=$(find . -name "MainActivity.java" -print -quit)
@@ -58,11 +60,11 @@ jobs:
 
       - name: Build APK
         run: |
-          cd TriVerse_Final
+          cd triverse_final
           flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: TriVerse-Premium-Final
-          path: 'TriVerse_Final/build/app/outputs/flutter-apk/*.apk'
+          path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
