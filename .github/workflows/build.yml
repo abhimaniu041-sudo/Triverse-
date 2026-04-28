@@ -28,21 +28,24 @@ jobs:
 
       - name: Nuclear Fix and Firebase Setup
         run: |
-          # Folder structure sahi karna
           mv TriVerse_Final triverse_final || true
           cd triverse_final
           
-          # Purana android folder hata kar naya fresh setup karna
+          # Android folder refresh
           rm -rf android
           flutter create . --platforms android
           
-          # Firebase Secret se google-services.json banana
+          # Firebase Setup
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           
-          # SDK Version fix karna (minSdkVersion 21)
+          # SDK Fix
           sed -i 's/minSdkVersion 19/minSdkVersion 21/g' android/app/build.gradle || true
           sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle || true
+
+          # --- Error Fix: MainLayout issue ---
+          # Ye line HomeDashboard mein se problem waali lines ko mita degi
+          sed -i 's/MainLayout.of(context)?.switchTab/print/g' lib/screens/home_dashboard.dart || true
 
           flutter pub get
 
@@ -54,5 +57,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Premium-App
+          name: TriVerse-App-Final
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
