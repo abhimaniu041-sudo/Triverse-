@@ -28,7 +28,7 @@ jobs:
         with:
           flutter-version: '3.19.0'
 
-      - name: Precision Fixes & Restoration
+      - name: Final Precision Fix
         run: |
           cd triverse_final
           
@@ -39,27 +39,30 @@ jobs:
           # 2. Modern Android Structure
           flutter create . --platforms android --overwrite
           
-          # 3. Restore Original Design
+          # 3. THE FIX: Duplicate MainActivity hatao
+          # Hum saari purani MainActivity files delete karke sirf ek fresh wali banayenge
+          find android/app/src/main -name "MainActivity.*" -delete
+          
+          # 4. Nayi Modern MainActivity banao
+          mkdir -p android/app/src/main/kotlin/com/abhimaniu/triverse
+          echo 'package com.abhimaniu.triverse
+          import io.flutter.embedding.android.FlutterActivity
+          class MainActivity: FlutterActivity() {
+          }' > android/app/src/main/kotlin/com/abhimaniu/triverse/MainActivity.kt
+
+          # 5. Restore Original Design
           rm -rf lib
           mv lib_backup lib
           cp pubspec_backup.yaml pubspec.yaml
           
-          # 4. Modern MainActivity Fix
-          FILE_PATH=$(find . -name "MainActivity.kt" -print -quit)
-          echo 'package com.abhimaniu.triverse
-          import io.flutter.embedding.android.FlutterActivity
-          class MainActivity: FlutterActivity() {
-          }' > "$FILE_PATH"
-
-          # 5. THE FIX: MainLayout Error Bypass
-          # Screenshot mein yahi error build rok raha hai
+          # 6. MainLayout Error Fix (Safety)
           sed -i 's/MainLayout.of(context)?.switchTab/print/g' lib/screens/home_dashboard.dart || true
 
-          # 6. Firebase Setup
+          # 7. Firebase Setup
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           
-          # 7. SDK Fix (minSdkVersion 21)
+          # 8. SDK Fix
           sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           
           flutter pub get
@@ -72,5 +75,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Premium-Final
+          name: TriVerse-Premium-Original
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
