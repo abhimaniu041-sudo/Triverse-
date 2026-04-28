@@ -26,35 +26,34 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0'
+          flutter-version: '3.19.0' # Downgrading for better compatibility with your code
 
-      - name: Total System Override
+      - name: Manual Force Restoration
         run: |
           cd triverse_final
           
-          # 1. Design Backup
+          # 1. Asli design backup
           cp -r lib lib_permanent_backup
           
           # 2. Fresh Android Structure
           flutter create . --platforms android --overwrite
           
-          # 3. Restore ORIGINAL Premium Design
+          # 3. Restore ORIGINAL Design (Anti-Demo Fix)
           rm -rf lib
           mv lib_permanent_backup lib
           
-          # 4. THE ULTIMATE KOTLIN FIX (Fixes line 1863)
-          # Hum file ko modify nahi, poora replace kar rahe hain
+          # 4. THE ABSOLUTE KOTLIN LOCK (Line 1863 Fix)
+          # Is baar hum file ko replace karne ke baad edit bhi karenge
           rm -f android/build.gradle
-          cat << 'EOF' > android/build.gradle
-          buildscript {
-              ext.kotlin_version = '1.9.22'
+          echo "buildscript {
+              ext.kotlin_version = '1.9.10'
               repositories {
                   google()
                   mavenCentral()
               }
               dependencies {
                   classpath 'com.android.tools.build:gradle:8.1.0'
-                  classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+                  classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.10'
                   classpath 'com.google.gms:google-services:4.3.15'
               }
           }
@@ -66,20 +65,16 @@ jobs:
           }
           rootProject.buildDir = '../build'
           subprojects {
-              project.buildDir = "${rootProject.buildDir}/${project.name}"
+              project.buildDir = \"\${rootProject.buildDir}/\${project.name}\"
           }
           subprojects {
               project.evaluationDependsOn(':app')
           }
-          tasks.register("clean", Delete) {
+          tasks.register(\"clean\", Delete) {
               delete rootProject.buildDir
-          }
-          EOF
+          }" > android/build.gradle
 
-          # 5. App-Level Gradle Fix (minSdkVersion 21)
-          sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
-
-          # 6. MainActivity Cleanup
+          # 5. MainActivity Cleanup
           find android/app/src/main -name "MainActivity.*" -delete
           mkdir -p android/app/src/main/kotlin/com/abhimaniu/triverse
           echo 'package com.abhimaniu.triverse
@@ -87,11 +82,14 @@ jobs:
           class MainActivity: FlutterActivity() {
           }' > android/app/src/main/kotlin/com/abhimaniu/triverse/MainActivity.kt
 
-          # 7. Firebase Config Injection
+          # 6. Firebase Setup
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           
-          # 8. Force Dependencies
+          # 7. SDK Fix (minSdkVersion 21)
+          sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
+          
+          # 8. Force Dependencies (Added Storage)
           flutter pub add firebase_core firebase_auth cloud_firestore firebase_storage cloud_functions google_generative_ai razorpay_flutter fl_chart:0.66.0 provider
           flutter pub get
 
