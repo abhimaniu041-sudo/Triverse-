@@ -1,4 +1,4 @@
-name: Build Marketplace Final
+name: Build TriVerse Final
 
 on:
   push:
@@ -22,50 +22,21 @@ jobs:
         with:
           flutter-version: '3.24.0'
 
-      - name: Hard Force Fix Activity & Gradle
+      - name: Prepare & Build
         run: |
-          # 1. Framework Fresh Start
           flutter create . --platforms android --overwrite --project-name triverse_app
+          unzip -o triverse_final.zip || true
           
-          # 2. Fix MainActivity.kt (Removing the error lines)
-          # Hum is file ko fresh override kar rahe hain taaki io error chala jaye
-          rm -rf android/app/src/main/kotlin/com/example/triverse_app/MainActivity.kt
-          mkdir -p android/app/src/main/kotlin/com/example/triverse_app/
-          cat <<EOF > android/app/src/main/kotlin/com/example/triverse_app/MainActivity.kt
-          package com.example.triverse_app
-          import io.flutter.embedding.android.FlutterActivity
-          class MainActivity: FlutterActivity() { }
-          EOF
-
-          # 3. Force Update Gradle Wrapper (Ensuring 8.0)
-          cd android
-          sed -i 's/gradle-7.6.3-all.zip/gradle-8.0-all.zip/g' gradle/wrapper/gradle-wrapper.properties
-          cd ..
-
-          # 4. Extract Zip
-          unzip -o triverse_final.zip
+          # Kotlin/Gradle Fixes
+          sed -i 's/gradle-7.6.3-all.zip/gradle-8.0-all.zip/g' android/gradle/wrapper/gradle-wrapper.properties || true
           
-          # 5. Fix Settings.gradle for Kotlin 1.9
-          cat <<EOF > android/settings.gradle
-          pluginManagement {
-              def flutterSdkPath = {
-                  def properties = new Properties()
-                  file("local.properties").withInputStream { properties.load(it) }
-                  return properties.getProperty("flutter.sdk")
-              }()
-              includeBuild("\$flutterSdkPath/packages/flutter_tools/gradle")
-              repositories { google(); mavenCentral(); gradlePluginPortal() }
-          }
-          plugins {
-              id "dev.flutter.flutter-gradle-plugin" version "1.0.0" apply false
-              id "com.android.application" version "8.1.0" apply false
-              id "org.jetbrains.kotlin.android" version "1.9.10" apply false
-          }
-          include ":app"
-          EOF
-
-      - name: Compilation
-        run: |
           flutter pub get
-          cd android && ./gradlew clean && cd ..
           flutter build apk --release --no-tree-shake-icons
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TriVerse-App-Package
+          # Ye path ab har tarah ki APK ko pakad lega
+          path: build/app/outputs/flutter-apk/*.apk
+          if-no-files-found: error
