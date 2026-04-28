@@ -12,28 +12,29 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Java & Flutter
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
-      - name: Setup Flutter
+
+      - name: Setup Latest Flutter (The Fix)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0'
+          # Flutter version ko 3.24.0 par shift kar rahe hain
+          flutter-version: '3.24.0'
 
-      - name: Hardcode Fix & Build
+      - name: Force Framework & Inject Code
         run: |
-          # 1. Fresh Framework
+          # 1. Framework create karo (Is baar naye version ke saath)
           flutter create . --platforms android --overwrite --project-name triverse_app
           
-          # 2. Extract Premium Code
+          # 2. ZIP Extract karo
           unzip -o triverse_final.zip
           
-          # 3. Force Version Fix (Direct Injection)
-          # Hum direct build.gradle file ke andar version 1.9.10 likh rahe hain
-          sed -i "s/ext.kotlin_version = '.*'/ext.kotlin_version = '1.9.10'/g" android/build.gradle
-          sed -i 's/kotlin("android") version ".*"/kotlin("android") version "1.9.10"/g' android/settings.gradle || true
+          # 3. Kotlin Version Direct Injection
+          # Naye Flutter ke liye hum 1.9.22 use karenge jo stable hai
+          sed -i "s/ext.kotlin_version = '.*'/ext.kotlin_version = '1.9.22'/g" android/build.gradle || true
           
           # 4. Essential Packages
           flutter pub add provider razorpay_flutter firebase_core firebase_auth cloud_functions
@@ -41,6 +42,5 @@ jobs:
       - name: Compilation
         run: |
           flutter pub get
-          # Extra step to ensure Gradle doesn't use old cache
           cd android && ./gradlew clean && cd ..
           flutter build apk --release --no-tree-shake-icons
