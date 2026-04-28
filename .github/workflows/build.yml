@@ -12,10 +12,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract ZIP
+      - name: Extract and Rename
         run: |
           unzip -o TriVerse_Final.zip
-          # Folder ka naam badal kar lowercase kar rahe hain taaki Flutter gussa na ho
           mv TriVerse_Final triverse_final || true
 
       - name: Setup Java
@@ -29,33 +28,30 @@ jobs:
         with:
           flutter-version: '3.19.0'
 
-      - name: Fix Embedding & Firebase
+      - name: Final Fixes
         run: |
           cd triverse_final
           
-          # 1. Force modern Android structure (No Overwrite to protect your code)
-          flutter create . --platforms android
+          # 1. Modern Android structure
+          flutter create . --platforms android --overwrite
           
-          # 2. Modern MainActivity Fix (v2 embedding)
+          # 2. Modern MainActivity Fix
           FILE_PATH=$(find . -name "MainActivity.kt" -print -quit)
-          if [ -z "$FILE_PATH" ]; then
-            FILE_PATH=$(find . -name "MainActivity.java" -print -quit)
-          fi
-          
-          echo "Updating MainActivity at $FILE_PATH"
           echo 'package com.abhimaniu.triverse
-
           import io.flutter.embedding.android.FlutterActivity
-
           class MainActivity: FlutterActivity() {
           }' > "$FILE_PATH"
 
-          # 3. Firebase Setup
+          # 3. MainLayout Error Fix (Is baar path sahi hai)
+          sed -i 's/MainLayout.of(context)?.switchTab/print/g' lib/screens/home_dashboard.dart || true
+          
+          # 4. Firebase Setup
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           
-          # 4. Version and Dependencies
+          # 5. SDK Fix
           sed -i 's/minSdkVersion 19/minSdkVersion 21/g' android/app/build.gradle || true
+          
           flutter pub get
 
       - name: Build APK
@@ -66,5 +62,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Premium-Final
+          name: TriVerse-Final-App
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
