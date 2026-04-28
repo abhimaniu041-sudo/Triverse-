@@ -1,4 +1,5 @@
-name: TriVerse - The Final Victory Build
+name: TriVerse Build APK (Stable)
+
 on:
   push:
     branches: [ main ]
@@ -7,55 +8,43 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: 🛠️ SCRAP OLD & REBUILD NEW
-        run: |
-          # 1. Folders Setup
-          mkdir -p lib/services
-          mkdir -p android/app/src/main/kotlin/com/example/triverse
-
-          # 2. Move files to lib
-          mv *.dart lib/ 2>/dev/null || true
-          mv lib/*.dart lib/ 2>/dev/null || true # In case they are already there
-          mv lib/support_chat_service.dart lib/services/ 2>/dev/null || true
-          mv lib/gemini_service.dart lib/services/ 2>/dev/null || true
-
-          # 3. FORCE DELETE OLD ANDROID CONFIGS (The Fix)
-          # Hum purane kachre ko delete kar rahe hain jo V1 embedding ka error de raha hai
-          rm -f android/app/src/main/kotlin/com/example/triverse/MainActivity.kt 2>/dev/null || true
-          
-          # 4. WRITE FRESH V2 MAINACTIVITY
-          echo "package com.example.triverse
-          import io.flutter.embedding.android.FlutterActivity
-          class MainActivity: FlutterActivity() {}" > android/app/src/main/kotlin/com/example/triverse/MainActivity.kt
-
-          # 5. FORCE PATCH MANIFEST (Strict Version)
-          # Purani lines ko hatane ka sabse pakka tarika
-          if [ -f AndroidManifest.xml ]; then
-            mv AndroidManifest.xml android/app/src/main/ 2>/dev/null || true
-          fi
-          sed -i 's/io.flutter.app.FlutterApplication/${applicationName}/g' android/app/src/main/AndroidManifest.xml || true
-          
-          # Audioplayers fix: Force modern Android embedding
-          echo 'flutter.minSdkVersion=21' > android/local.properties
-          echo 'flutter.targetSdkVersion=34' >> android/local.properties
-
-      - name: 🚀 Setup Flutter (Stable)
+      # 1. Flutter install
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.19.0'
 
-      - name: 🏗️ Final Build Effort
+      # 2. Create clean Flutter project
+      - name: Create clean project
         run: |
-          flutter pub upgrade --major-versions # Purani plugins (audio) ko force upgrade karo
-          flutter pub get
-          flutter build apk --release --no-tree-shake-icons
+          flutter create temp_app
 
-      - name: 📦 Download Link
+      # 3. Copy your code into clean project
+      - name: Inject your code
+        run: |
+          rm -rf temp_app/lib/*
+          mkdir -p temp_app/lib
+          cp -r lib/* temp_app/lib/ || true
+
+          # Optional files
+          cp pubspec.yaml temp_app/pubspec.yaml || true
+          cp -r assets temp_app/ || true
+
+      # 4. Build APK
+      - name: Build APK
+        run: |
+          cd temp_app
+          flutter pub get
+          flutter build apk --release
+
+      # 5. Upload APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-SUCCESS-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: TriVerse-APK
+          path: temp_app/build/app/outputs/flutter-apk/app-release.apk
