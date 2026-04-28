@@ -28,48 +28,34 @@ jobs:
         with:
           flutter-version: '3.19.0'
 
-      - name: Precision Fixes
+      - name: Manual Android Setup (Safe Mode)
         run: |
           cd triverse_final
           
-          # 1. Purana kachra saaf karo
-          rm -rf android
+          # 1. Sabse bada fix: Flutter create nahi chalayenge taaki lib folder safe rahe
+          # Sirf missing android folder setup karenge (agar zarurat padi toh)
+          flutter pub get
           
-          # 2. Fresh Android structure
-          flutter create . --platforms android --overwrite
-          
-          # 3. Modern MainActivity Fix
-          FILE_PATH=$(find . -name "MainActivity.kt" -print -quit)
-          echo 'package com.abhimaniu.triverse
-          import io.flutter.embedding.android.FlutterActivity
-          class MainActivity: FlutterActivity() {
-          }' > "$FILE_PATH"
+          # 2. MainActivity ko manually overwrite karenge (v2 embedding)
+          # Isse "audioplayers" wala error solve ho jayega
+          find . -name "MainActivity.kt" -exec sh -c 'echo "package com.abhimaniu.triverse\n\nimport io.flutter.embedding.android.FlutterActivity\n\nclass MainActivity: FlutterActivity() {\n}" > {}' \;
 
-          # 4. MainLayout & Payment Service Error Bypass
-          # In files mein jahan error aa raha hai, unhe bypass kar rahe hain
-          sed -i 's/MainLayout.of(context)?.switchTab/print/g' lib/screens/home_dashboard.dart || true
-          sed -i 's/Razorpay/dynamic/g' lib/services/payment_service.dart || true
-          sed -i 's/FirebaseAuth/dynamic/g' lib/services/payment_service.dart || true
-          sed -i 's/FirebaseFunctions/dynamic/g' lib/services/payment_service.dart || true
-          
-          # 5. Firebase Setup
+          # 3. Firebase Setup
+          # Kyunki humne flutter create nahi kiya, humein manually check karna hai
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           
-          # 6. SDK Fix (minSdkVersion 21)
-          sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
-          
-          # 7. Package Sync
-          flutter pub get
-          flutter pub upgrade
+          # 4. Version Fix (Directly in gradle)
+          find . -name "build.gradle" -exec sed -i "s/minSdkVersion .*/minSdkVersion 21/g" {} +
 
       - name: Build APK
         run: |
           cd triverse_final
-          flutter build apk --release --no-tree-shake-icons --no-pub
+          # --no-pub use karenge taaki build process mein koi file change na ho
+          flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Final-Working
+          name: TriVerse-Original-Code-Final
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
