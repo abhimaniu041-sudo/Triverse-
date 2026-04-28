@@ -1,77 +1,45 @@
-name: Build TriVerse Final APK
+name: Build TriVerse APK
 
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Extract and Rename
-        run: |
-          unzip -o TriVerse_Final.zip
-          mv TriVerse_Final triverse_final || true
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0'
+          flutter-version: '3.19.0'
 
-      - name: The Absolute Final Fix
+      - name: Extract Project
+        run: unzip -o TriVerse_Final.zip -d project
+
+      # 🔥 IMPORTANT FIX
+      - name: Fix Android V2
         run: |
-          cd triverse_final
-          
-          # 1. Fresh Android Setup
+          cd project/TriVerse_Final
           flutter create . --platforms android --overwrite
-          
-          # 2. RESTORE PREMIUM CODE (Demo page mitao)
-          rm -rf lib
-          rm -f pubspec.yaml
-          unzip -o ../TriVerse_Final.zip
-          mv TriVerse_Final/lib lib
-          mv TriVerse_Final/pubspec.yaml pubspec.yaml
-          
-          # 3. CRITICAL: Fix MainLayout Error (Screenshot Fix)
-          # Hum code mein se wo lines disable kar rahe hain jo build rok rahi hain
-          # Inhe hum baad mein UI se sahi kar sakte hain, abhi APK zaruri hai
-          sed -i 's/MainLayout.of(context)/context/g' lib/screens/home_dashboard.dart || true
-          sed -i 's/switchTab/toString/g' lib/screens/home_dashboard.dart || true
-          
-          # 4. MainActivity Cleanup (com.abhimaniu.triverse)
-          find android/app/src/main -name "MainActivity.*" -delete
-          mkdir -p android/app/src/main/kotlin/com/abhimaniu/triverse
-          echo 'package com.abhimaniu.triverse
-          import io.flutter.embedding.android.FlutterActivity
-          class MainActivity: FlutterActivity() {
-          }' > android/app/src/main/kotlin/com/abhimaniu/triverse/MainActivity.kt
 
-          # 5. Firebase & SDK Lock
-          mkdir -p android/app
-          echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
-          sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
-          
-          # 6. Library Sync
-          flutter pub add fl_chart:0.68.0
+      - name: Get Dependencies
+        run: |
+          cd project/TriVerse_Final
           flutter pub get
 
       - name: Build APK
         run: |
-          cd triverse_final
-          flutter build apk --release --no-tree-shake-icons
+          cd project/TriVerse_Final
+          flutter build apk --release
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Premium-Final-Build
-          path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
+          name: triverse-apk
+          path: project/TriVerse_Final/build/app/outputs/flutter-apk/app-release.apk
