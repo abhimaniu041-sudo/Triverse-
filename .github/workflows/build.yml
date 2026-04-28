@@ -1,4 +1,4 @@
-name: TriVerse Final Victory Build
+name: TriVerse - Ultimate Strong Fix
 on:
   push:
     branches: [ main ]
@@ -11,57 +11,58 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Force Fix Project Structure
+      - name: 🛠️ AUTO-ORGANIZE & ANDROID V2 PATCH
         run: |
-          # 1. Folders Setup
+          # 1. Zaruri folders banao (Structure Recovery)
           mkdir -p lib/services
           mkdir -p android/app/src/main/kotlin/com/example/triverse
 
-          # 2. Files ko unki sahi jagah move karo
+          # 2. Bikhri hui files ko sahi jagah move karo (The "Janitor" Mode)
           mv main.dart lib/ 2>/dev/null || true
           mv app_state.dart lib/ 2>/dev/null || true
           mv firebase_options.dart lib/ 2>/dev/null || true
           mv support_chat_service.dart lib/services/ 2>/dev/null || true
           mv gemini_service.dart lib/services/ 2>/dev/null || true
           mv auth_service.dart lib/services/ 2>/dev/null || true
+          mv payment_service.dart lib/services/ 2>/dev/null || true
+          mv firestore_service.dart lib/services/ 2>/dev/null || true
           mv *_screen.dart lib/ 2>/dev/null || true
           mv *_hub.dart lib/ 2>/dev/null || true
           mv *_panel.dart lib/ 2>/dev/null || true
           mv main_layout.dart lib/ 2>/dev/null || true
-          mv payment_service.dart lib/services/ 2>/dev/null || true
 
-          # 3. Android V2 Embedding Fix (Auto-Patch)
-          # Purani MainActivity hatao aur nayi dalo
-          rm -rf android/app/src/main/kotlin/com/example/triverse/MainActivity.kt
+          # 3. Android V1 to V2 Embedding Force Fix
+          # Nayi MainActivity.kt likho jo V2 support kare
           echo "package com.example.triverse
           import io.flutter.embedding.android.FlutterActivity
           class MainActivity: FlutterActivity() {}" > android/app/src/main/kotlin/com/example/triverse/MainActivity.kt
 
-          # AndroidManifest Patch
+          # AndroidManifest Patch (Purani lines ko modern lines se badlo)
           if [ -f AndroidManifest.xml ]; then
             mv AndroidManifest.xml android/app/src/main/ 2>/dev/null || true
           fi
+          
+          # Force Patch Manifest for V2
           sed -i 's/io.flutter.app.FlutterApplication/${applicationName}/g' android/app/src/main/AndroidManifest.xml || true
+          sed -i '/<application/a \        <meta-data android:name="flutterEmbedding" android:value="2" />' android/app/src/main/AndroidManifest.xml || true
 
-      - name: Setup Java & Flutter
+      - name: ⚙️ Setup Java & Flutter
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
-      - name: Setup Flutter
+      - name: 🚀 Setup Flutter (Stable)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.0' # Sabse stable version aapke code ke liye
+          flutter-version: '3.19.0' # Sabse compatible version
 
-      - name: Build APK
+      - name: 🏗️ Build Final APK
         run: |
-          flutter pub get
-          # Purani plugins ko force update karne ke liye
-          flutter pub upgrade
+          flutter pub upgrade  # Plugins (audioplayers etc) ko update karne ke liye
           flutter build apk --release --no-tree-shake-icons
 
-      - name: Upload Final APK
+      - name: 📦 Upload APK Result
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Final-App
+          name: TriVerse-Final-Verified-APK
           path: build/app/outputs/flutter-apk/app-release.apk
