@@ -28,34 +28,48 @@ jobs:
         with:
           flutter-version: '3.19.0'
 
-      - name: Manual Android Setup (Safe Mode)
+      - name: Fix Embedding & Restore Original Code
         run: |
           cd triverse_final
           
-          # 1. Sabse bada fix: Flutter create nahi chalayenge taaki lib folder safe rahe
-          # Sirf missing android folder setup karenge (agar zarurat padi toh)
-          flutter pub get
+          # 1. Tumhare asli code ka backup lo
+          cp -r lib lib_backup
+          cp -r assets assets_backup || true
           
-          # 2. MainActivity ko manually overwrite karenge (v2 embedding)
-          # Isse "audioplayers" wala error solve ho jayega
-          find . -name "MainActivity.kt" -exec sh -c 'echo "package com.abhimaniu.triverse\n\nimport io.flutter.embedding.android.FlutterActivity\n\nclass MainActivity: FlutterActivity() {\n}" > {}' \;
+          # 2. Modern Android structure setup karo (Isse embedding fix hogi)
+          flutter create . --platforms android --overwrite
+          
+          # 3. Demo code ko hatao aur asli premium code wapas dalo
+          rm -rf lib
+          mv lib_backup lib
+          if [ -d "assets_backup" ]; then
+            rm -rf assets
+            mv assets_backup assets
+          fi
+          
+          # 4. Modern MainActivity Fix (v2 embedding)
+          FILE_PATH=$(find . -name "MainActivity.kt" -print -quit)
+          echo 'package com.abhimaniu.triverse
+          import io.flutter.embedding.android.FlutterActivity
+          class MainActivity: FlutterActivity() {
+          }' > "$FILE_PATH"
 
-          # 3. Firebase Setup
-          # Kyunki humne flutter create nahi kiya, humein manually check karna hai
+          # 5. Firebase Setup
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           
-          # 4. Version Fix (Directly in gradle)
-          find . -name "build.gradle" -exec sed -i "s/minSdkVersion .*/minSdkVersion 21/g" {} +
+          # 6. SDK Fix (minSdkVersion 21)
+          sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
+          
+          flutter pub get
 
       - name: Build APK
         run: |
           cd triverse_final
-          # --no-pub use karenge taaki build process mein koi file change na ho
           flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Original-Code-Final
+          name: TriVerse-Premium-Final-Working
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
