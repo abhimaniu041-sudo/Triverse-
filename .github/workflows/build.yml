@@ -28,39 +28,36 @@ jobs:
         with:
           flutter-version: '3.19.0'
 
-      - name: Final Version Lock
+      - name: Force Original Code Only
         run: |
           cd triverse_final
           
-          # 1. Fresh Android Setup
-          flutter create . --platforms android --overwrite
+          # 1. Pubspec ko overwrite hone se roko
+          flutter pub get
           
-          # 2. THE FIX: Force Kotlin to 1.8.22 (Metadata mismatch solution)
-          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.8.22"/g' android/build.gradle || true
-          
-          # 3. MainActivity Cleanup
-          find android/app/src/main -name "MainActivity.*" -delete
+          # 2. Android folder fix (Bina pura project mitaaye)
+          # Hum sirf wo files inject karenge jo build ko 'com.abhimaniu.triverse' dikhayein
           mkdir -p android/app/src/main/kotlin/com/abhimaniu/triverse
           echo 'package com.abhimaniu.triverse
           import io.flutter.embedding.android.FlutterActivity
           class MainActivity: FlutterActivity() {
           }' > android/app/src/main/kotlin/com/abhimaniu/triverse/MainActivity.kt
 
-          # 4. Firebase & SDK Fix
+          # 3. Firebase Config
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
-          sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           
-          # 5. Get Dependencies
-          flutter pub get
+          # 4. Final SDK Check
+          sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
 
-      - name: Build APK
+      - name: Build APK (The Real One)
         run: |
           cd triverse_final
+          # Is baar hum --no-clean use karenge taaki files safe rahein
           flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Final-Success
+          name: TriVerse-Premium-Original-App
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
