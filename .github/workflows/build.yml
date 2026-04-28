@@ -42,9 +42,10 @@ jobs:
           rm -rf lib
           mv lib_permanent_backup lib
           
-          # 4. THE KOTLIN & GRADLE FIX (Screenshot Error Solution)
-          # Hum sirf version line badlenge, poori file nahi taaki plugin na khoye
-          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.22"/g' android/build.gradle || true
+          # 4. THE KOTLIN LOCK (Fixes line 1863 in screenshot)
+          # Hum manually build.gradle ki pehli line mein version inject kar rahe hain
+          sed -i '1i ext.kotlin_version = "1.9.22"' android/build.gradle
+          sed -i 's/<latest-version>/1.9.22/g' android/build.gradle || true
           
           # 5. MainActivity Cleanup
           find android/app/src/main -name "MainActivity.*" -delete
@@ -71,5 +72,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Premium-Original-App
+          name: TriVerse-Premium-Original-Final
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
