@@ -28,21 +28,18 @@ jobs:
         with:
           flutter-version: '3.19.0'
 
-      - name: Ultimate Restoration
+      - name: Clean & Force Dependencies
         run: |
           cd triverse_final
           
-          # 1. Lib folder backup
-          cp -r lib lib_backup
+          # 1. Purani files hatao taaki fresh start ho
+          rm -rf android
+          rm -f pubspec.lock
           
-          # 2. Fresh Android Structure (No Sed/Bypass)
+          # 2. Fresh Android Structure (Embedding fix)
           flutter create . --platforms android --overwrite
           
-          # 3. Restore ORIGINAL Design (Asli code wapas)
-          rm -rf lib
-          mv lib_backup lib
-          
-          # 4. MainActivity Fix (Proper Path)
+          # 3. Modern MainActivity Fix (Direct Path)
           find android/app/src/main -name "MainActivity.*" -delete
           mkdir -p android/app/src/main/kotlin/com/abhimaniu/triverse
           echo 'package com.abhimaniu.triverse
@@ -50,25 +47,26 @@ jobs:
           class MainActivity: FlutterActivity() {
           }' > android/app/src/main/kotlin/com/abhimaniu/triverse/MainActivity.kt
 
-          # 5. Firebase Setup
+          # 4. Firebase Setup
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           
-          # 6. Hard-fix minSdkVersion 21 (Razorpay requirement)
+          # 5. SDK Fix (minSdkVersion 21)
           sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           
-          # 7. Package Repair (Ye step saare errors khatam karega)
+          # 6. FORCE RE-INSTALL LIBRARIES
+          # In commands se compiler ko Razorpay aur Firebase mil jayenge
           flutter pub get
           flutter pub upgrade
 
       - name: Build APK
         run: |
           cd triverse_final
-          # Seedha build karenge, koi shortcut nahi
+          # Asli premium code build karenge
           flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Premium-Original
+          name: TriVerse-Premium-Final
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
