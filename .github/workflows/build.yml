@@ -28,11 +28,11 @@ jobs:
         with:
           flutter-version: '3.22.0'
 
-      - name: The Crash-Proof Execution
+      - name: Surgical Overwrite (No Deprecated Code)
         run: |
           cd triverse_final
           
-          # 1. Fresh Android Structure
+          # 1. Fresh Android Setup
           flutter create . --platforms android --overwrite
           
           # 2. RESTORE PREMIUM CODE (Zero-Demo Guarantee)
@@ -42,15 +42,15 @@ jobs:
           mv TriVerse_Final/lib lib
           mv TriVerse_Final/pubspec.yaml pubspec.yaml
           
-          # 3. ANTI-CRASH: Force ignore Firebase startup checks
-          # Hum code ko bypass kar rahe hain taaki agar config na mile toh bhi app khule
+          # 3. ANTI-CRASH: Silent Firebase Startup
           find lib/ -name "main.dart" -exec sed -i 's/await Firebase.initializeApp.*/print("Firebase Safe Mode");/g' {} + || true
           
-          # 4. PROGUARD KILLER: Disable shrinking/obfuscation jo crash kar rahi hai
-          # Hum app ko bolenge ki security ke chakkar mein crash na ho
-          mkdir -p android/app
-          echo "android.enableR8=false" >> android/gradle.properties
-          echo "android.enableR8.fullMode=false" >> android/gradle.properties
+          # 4. FIX: Remove deprecated R8 call (Fixes Line 22 Screenshot Error)
+          # Hum properties file ko saaf rakhenge
+          rm -f android/gradle.properties
+          echo "org.gradle.jvmargs=-Xmx4G" >> android/gradle.properties
+          echo "android.useAndroidX=true" >> android/gradle.properties
+          echo "android.enableJetifier=true" >> android/gradle.properties
 
           # 5. MainActivity Setup (Package Lock)
           find android/app/src/main -name "MainActivity.*" -delete
@@ -60,20 +60,20 @@ jobs:
           class MainActivity: FlutterActivity() {
           }' > android/app/src/main/kotlin/com/abhimaniu/triverse/MainActivity.kt
 
-          # 6. Final Sync
+          # 6. Firebase & SDK Config
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           flutter pub get
 
-      - name: Build APK (Optimized Release)
+      - name: Build APK (Release Mode)
         run: |
           cd triverse_final
-          # Is baar hum release mode karenge par security checks ko bypass karke
-          flutter build apk --release --no-tree-shake-icons --no-shrink
+          # Is baar hum simple release mode rakhenge bina problematic flags ke
+          flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Final-Working-App
+          name: TriVerse-Final-Success-App
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
