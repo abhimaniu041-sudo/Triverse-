@@ -1,5 +1,4 @@
-name: TriVerse Build APK (Stable)
-
+name: TriVerse - Manual Victory
 on:
   push:
     branches: [ main ]
@@ -8,43 +7,20 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      # 1. Flutter install
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+      - uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.19.0'
-
-      # 2. Create clean Flutter project
-      - name: Create clean project
-        run: |
-          flutter create temp_app
-
-      # 3. Copy your code into clean project
-      - name: Inject your code
-        run: |
-          rm -rf temp_app/lib/*
-          mkdir -p temp_app/lib
-          cp -r lib/* temp_app/lib/ || true
-
-          # Optional files
-          cp pubspec.yaml temp_app/pubspec.yaml || true
-          cp -r assets temp_app/ || true
-
-      # 4. Build APK
-      - name: Build APK
-        run: |
-          cd temp_app
+      - run: |
           flutter pub get
-          flutter build apk --release
-
-      # 5. Upload APK
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+          flutter build apk --release --no-tree-shake-icons
+      - uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-APK
-          path: temp_app/build/app/outputs/flutter-apk/app-release.apk
+          name: TriVerse-Final-APK
+          path: build/app/outputs/flutter-apk/*.apk
