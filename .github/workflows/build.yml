@@ -21,12 +21,21 @@ jobs:
           node-version: 18
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          # Agar files folder ke andar hain, toh wahan jao
+          if [ -d "TriVerse_Final" ]; then cd TriVerse_Final; fi
+          npm install
 
       - name: Create google-services.json
         run: |
-          mkdir -p android/app
-          echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
+          # Sahi folder mein file banana
+          if [ -d "TriVerse_Final" ]; then 
+            mkdir -p TriVerse_Final/android/app
+            echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > TriVerse_Final/android/app/google-services.json
+          else
+            mkdir -p android/app
+            echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
+          fi
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -36,6 +45,7 @@ jobs:
 
       - name: Build Android APK
         run: |
+          if [ -d "TriVerse_Final" ]; then cd TriVerse_Final; fi
           cd android
           chmod +x gradlew
           ./gradlew assembleRelease
@@ -44,4 +54,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: triverse-release-apk
-          path: android/app/build/outputs/apk/release/app-release.apk
+          path: "**/android/app/build/outputs/apk/release/app-release.apk"
