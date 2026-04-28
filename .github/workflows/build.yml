@@ -1,4 +1,4 @@
-name: Build TriVerse Final - Auto Organizer
+name: Build TriVerse Final - Folder Fix
 on:
   push:
     branches: [ main ]
@@ -11,14 +11,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Organize Files (Folder Correction)
+      - name: Organize Files Automatically
         run: |
-          # 1. Folders banao
+          # 1. Zaruri folders banao
           mkdir -p lib/services
           mkdir -p android/app/src/main
 
-          # 2. Files ko unki sahi jagah move karo
-          # Lib files
+          # 2. Bikhri hui files ko sahi jagah move karo
+          # Lib folder ki files
           mv main.dart lib/ 2>/dev/null || true
           mv app_state.dart lib/ 2>/dev/null || true
           mv firebase_options.dart lib/ 2>/dev/null || true
@@ -27,16 +27,14 @@ jobs:
           mv *_panel.dart lib/ 2>/dev/null || true
           mv main_layout.dart lib/ 2>/dev/null || true
 
-          # Services files
+          # Services folder ki files
           mv support_chat_service.dart lib/services/ 2>/dev/null || true
           mv gemini_service.dart lib/services/ 2>/dev/null || true
           mv auth_service.dart lib/services/ 2>/dev/null || true
           mv payment_service.dart lib/services/ 2>/dev/null || true
           mv firestore_service.dart lib/services/ 2>/dev/null || true
-          mv fcm_service.dart lib/services/ 2>/dev/null || true
-          mv zip_service.dart lib/services/ 2>/dev/null || true
 
-          # Android files
+          # Android folder ki files (Agar bahar hain toh)
           mv AndroidManifest.xml android/app/src/main/ 2>/dev/null || true
           mv MainActivity.kt android/app/src/main/ 2>/dev/null || true
 
