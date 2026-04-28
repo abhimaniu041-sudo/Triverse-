@@ -24,7 +24,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.10.0' # Naya version jo SDK >=3.0.0 ko support karega
+          flutter-version: '3.22.0' # Latest stable version for SDK compatibility
 
       - name: Create google-services.json
         run: |
@@ -33,7 +33,8 @@ jobs:
 
       - name: Install Dependencies
         working-directory: ./TriVerse_Final
-        run: flutter pub get
+        run: |
+          flutter pub get || flutter pub upgrade
 
       - name: Build APK
         working-directory: ./TriVerse_Final
