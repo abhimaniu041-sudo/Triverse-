@@ -26,33 +26,35 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.0'
+          # Version thoda stable aur naya use kar rahe hain mismatch rokne ke liye
+          flutter-version: '3.22.0'
 
-      - name: Nuclear Package Injection
+      - name: Precision Fixes
         run: |
           cd triverse_final
           
-          # 1. Asli design backup
+          # 1. Lib backup
           cp -r lib lib_permanent_backup
           
-          # 2. Fresh Android Setup
+          # 2. Fresh Android Structure
           flutter create . --platforms android --overwrite
           
           # 3. Restore ORIGINAL Design
           rm -rf lib
           mv lib_permanent_backup lib
           
-          # 4. THE FIX: Force Add EVERY missing package from your screenshots
-          # Isse Firestore, Gemini, Razorpay aur ab Charts ke errors khatam ho jayenge
-          flutter pub add firebase_core firebase_auth cloud_firestore google_generative_ai razorpay_flutter cloud_functions fl_chart provider
-          
-          # 5. MainActivity Cleanup
+          # 4. Fix Duplicate MainActivity
           find android/app/src/main -name "MainActivity.*" -delete
           mkdir -p android/app/src/main/kotlin/com/abhimaniu/triverse
           echo 'package com.abhimaniu.triverse
           import io.flutter.embedding.android.FlutterActivity
           class MainActivity: FlutterActivity() {
           }' > android/app/src/main/kotlin/com/abhimaniu/triverse/MainActivity.kt
+
+          # 5. THE FIX: Force specific versions of problematic libraries
+          # 'fl_chart' ka version fix kar rahe hain taaki 'Color.a' wala error na aaye
+          flutter pub add fl_chart:0.66.0
+          flutter pub add firebase_core firebase_auth cloud_firestore google_generative_ai razorpay_flutter
 
           # 6. Firebase Setup
           mkdir -p android/app
@@ -71,5 +73,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Premium-Final-Working
+          name: TriVerse-Premium-Final
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
