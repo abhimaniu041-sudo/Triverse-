@@ -1,4 +1,4 @@
-name: Build TriVerse Final Premium
+name: Build Marketplace Final
 
 on:
   push:
@@ -22,27 +22,36 @@ jobs:
         with:
           flutter-version: '3.24.0'
 
-      - name: Hard Force Gradle & Kotlin
+      - name: Hard Force Fix Activity & Gradle
         run: |
           # 1. Framework Fresh Start
           flutter create . --platforms android --overwrite --project-name triverse_app
           
-          # 2. Force Update Gradle Wrapper (The 8.0 Fix)
+          # 2. Fix MainActivity.kt (Removing the error lines)
+          # Hum is file ko fresh override kar rahe hain taaki io error chala jaye
+          rm -rf android/app/src/main/kotlin/com/example/triverse_app/MainActivity.kt
+          mkdir -p android/app/src/main/kotlin/com/example/triverse_app/
+          cat <<EOF > android/app/src/main/kotlin/com/example/triverse_app/MainActivity.kt
+          package com.example.triverse_app
+          import io.flutter.embedding.android.FlutterActivity
+          class MainActivity: FlutterActivity() { }
+          EOF
+
+          # 3. Force Update Gradle Wrapper (Ensuring 8.0)
           cd android
           sed -i 's/gradle-7.6.3-all.zip/gradle-8.0-all.zip/g' gradle/wrapper/gradle-wrapper.properties
           cd ..
 
-          # 3. Extract Premium Code
+          # 4. Extract Zip
           unzip -o triverse_final.zip
           
-          # 4. Final Settings Fix
+          # 5. Fix Settings.gradle for Kotlin 1.9
           cat <<EOF > android/settings.gradle
           pluginManagement {
               def flutterSdkPath = {
                   def properties = new Properties()
                   file("local.properties").withInputStream { properties.load(it) }
-                  def flutterSdkPath = properties.getProperty("flutter.sdk")
-                  return flutterSdkPath
+                  return properties.getProperty("flutter.sdk")
               }()
               includeBuild("\$flutterSdkPath/packages/flutter_tools/gradle")
               repositories { google(); mavenCentral(); gradlePluginPortal() }
@@ -55,10 +64,7 @@ jobs:
           include ":app"
           EOF
 
-          # 5. Packages
-          flutter pub add provider razorpay_flutter firebase_core firebase_auth cloud_functions
-
-      - name: Final Compilation
+      - name: Compilation
         run: |
           flutter pub get
           cd android && ./gradlew clean && cd ..
