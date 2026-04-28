@@ -12,14 +12,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract & Smart Folder Sync
+      - name: Extract & Clean Name
         run: |
           unzip -o TriVerse_Final.zip
-          # Finding where the actual code is and moving it to root
+          # Sabse bada fix: Naam se '-' hata kar 'triverse_app' kar diya
+          mkdir triverse_app
           if [ -d "TriVerse_Final/TriVerse_Final" ]; then
-            cp -r TriVerse_Final/TriVerse_Final/* .
+            cp -r TriVerse_Final/TriVerse_Final/* triverse_app/
           elif [ -d "TriVerse_Final" ]; then
-            cp -r TriVerse_Final/* .
+            cp -r TriVerse_Final/* triverse_app/
           fi
 
       - name: Setup Java
@@ -33,13 +34,13 @@ jobs:
         with:
           flutter-version: '3.22.0'
 
-      - name: Source Code Repair (The Healer)
+      - name: Source Code Repair
         run: |
-          # 1. Fresh Framework Overwrite
-          flutter create . --platforms android --overwrite
+          cd triverse_app
+          # 1. Fresh Framework with Valid Name
+          flutter create . --platforms android --overwrite --project-name triverse_app
           
-          # 2. Permanent Fix for main.dart (The Crash Buster)
-          # Hum code ke startup ko safe mode mein overwrite kar rahe hain
+          # 2. Crash Buster (Rewriting main.dart)
           cat << 'EOF' > lib/main.dart
           import 'package:flutter/material.dart';
           import 'screens/home_dashboard.dart';
@@ -53,12 +54,11 @@ jobs:
           }
           EOF
 
-          # 3. Global UI Error Remover
-          # Fixes 'MainLayout' undefined error across the whole app
+          # 3. Global UI Fix (MainLayout remover)
           find lib/ -name "*.dart" -exec sed -i 's/MainLayout.of(context)?.switchTab/print/g' {} + || true
           find lib/ -name "*.dart" -exec sed -i 's/MainLayout.of(context)/context/g' {} + || true
 
-          # 4. MainActivity Setup (Package: com.abhimaniu.triverse)
+          # 4. MainActivity Setup (com.abhimaniu.triverse)
           find android/app/src/main -name "MainActivity.*" -delete
           mkdir -p android/app/src/main/kotlin/com/abhimaniu/triverse
           echo 'package com.abhimaniu.triverse
@@ -66,20 +66,20 @@ jobs:
           class MainActivity: FlutterActivity() {
           }' > android/app/src/main/kotlin/com/abhimaniu/triverse/MainActivity.kt
 
-          # 5. SDK & Config Sync
+          # 5. SDK & Firebase Sync
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           
-          # 6. Final Dependency Refresh
           flutter pub get
 
       - name: Build APK (Release Mode)
         run: |
+          cd triverse_app
           flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Premium-Final-Working
-          path: 'build/app/outputs/flutter-apk/*.apk'
+          name: TriVerse-Final-Success
+          path: 'triverse_app/build/app/outputs/flutter-apk/*.apk'
