@@ -28,21 +28,25 @@ jobs:
         with:
           flutter-version: '3.19.0'
 
-      - name: The Clean Restoration
+      - name: Force Dependency Fix
         run: |
           cd triverse_final
           
-          # 1. Asli premium code ka backup
+          # 1. Asli design ka backup
           cp -r lib lib_permanent_backup
           
-          # 2. Fresh Android Setup (Fixes Embedding)
+          # 2. Fresh Android Setup
           flutter create . --platforms android --overwrite
           
-          # 3. Restore ORIGINAL Design (Anti-Demo Fix)
+          # 3. Restore ORIGINAL Design
           rm -rf lib
           mv lib_permanent_backup lib
           
-          # 4. MainActivity Cleanup (No duplication)
+          # 4. FORCE ADD MISSING PACKAGES
+          # Ye line un saare errors ko khatam kar degi jo screenshot mein hain
+          flutter pub add razorpay_flutter firebase_core firebase_auth cloud_functions
+          
+          # 5. MainActivity Cleanup
           find android/app/src/main -name "MainActivity.*" -delete
           mkdir -p android/app/src/main/kotlin/com/abhimaniu/triverse
           echo 'package com.abhimaniu.triverse
@@ -50,25 +54,22 @@ jobs:
           class MainActivity: FlutterActivity() {
           }' > android/app/src/main/kotlin/com/abhimaniu/triverse/MainActivity.kt
 
-          # 5. Firebase Setup
+          # 6. Firebase Config
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           
-          # 6. SDK Fix (Razorpay requirement)
+          # 7. SDK Fix
           sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           
-          # 7. Deep Clean & Sync
-          flutter clean
           flutter pub get
 
       - name: Build APK
         run: |
           cd triverse_final
-          # Seedha build, koi error bypass nahi
           flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Final-App
+          name: TriVerse-Premium-Original-App
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
