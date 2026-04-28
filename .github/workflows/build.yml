@@ -28,20 +28,24 @@ jobs:
         with:
           flutter-version: '3.19.0'
 
-      - name: Surgical V2 Migration & Fix
+      - name: THE FINAL OVERWRITE (Anti-Demo Fix)
         run: |
           cd triverse_final
           
-          # 1. Force V2 Embedding (Fixes Line 196 in screenshot)
-          # Hum sirf android folder ko refresh karenge bina lib/main.dart ko touch kiye
+          # 1. Android settings fix (Isse demo page ban jayega, par hum ise mita denge)
           flutter create . --platforms android --overwrite
           
-          # 2. Re-Restore Original lib (Just in case flutter create touched it)
-          # Isse demo page ka naam-o-nishaan mit jayega
-          unzip -o ../TriVerse_Final.zip
-          mv TriVerse_Final/* . || true
+          # 2. THE NUCLEAR STEP: Demo page ko jadd se mitao
+          # Hum 'lib' folder aur 'pubspec.yaml' ko poora uda rahe hain
+          rm -rf lib
+          rm -f pubspec.yaml
           
-          # 3. MainActivity Cleanup (V2 format)
+          # 3. Asli Code Restore (ZIP se fresh copy)
+          unzip -o ../TriVerse_Final.zip
+          mv TriVerse_Final/lib lib
+          mv TriVerse_Final/pubspec.yaml pubspec.yaml
+          
+          # 4. MainActivity Fix (com.abhimaniu.triverse)
           find android/app/src/main -name "MainActivity.*" -delete
           mkdir -p android/app/src/main/kotlin/com/abhimaniu/triverse
           echo 'package com.abhimaniu.triverse
@@ -49,17 +53,15 @@ jobs:
           class MainActivity: FlutterActivity() {
           }' > android/app/src/main/kotlin/com/abhimaniu/triverse/MainActivity.kt
 
-          # 4. Firebase Config
+          # 5. Firebase & SDK Lock
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
-          
-          # 5. SDK Fix
           sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           
           # 6. Fresh Packages
           flutter pub get
 
-      - name: Build APK (The Real One)
+      - name: Build APK (The Real Premium One)
         run: |
           cd triverse_final
           flutter build apk --release --no-tree-shake-icons
@@ -67,5 +69,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Premium-Original-App
+          name: TriVerse-Premium-Final-Success
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
