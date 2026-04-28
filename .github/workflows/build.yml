@@ -11,8 +11,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Extract and Rename
         run: |
@@ -30,19 +28,24 @@ jobs:
         with:
           flutter-version: '3.19.0'
 
-      - name: The Nuclear Fix
+      - name: Manual Force Restoration
         run: |
           cd triverse_final
           
-          # 1. Fresh Android setup (Embedding fix)
+          # 1. Asli Premium code ka backup lo (Manual copy)
+          cp -r lib lib_permanent_backup
+          cp pubspec.yaml pubspec_permanent_backup.yaml
+          
+          # 2. Modern Android setup
           flutter create . --platforms android --overwrite
           
-          # 2. FORCE RESTORE: GitHub se asli premium code wapas kheencho
-          # Isse demo page kabhi nahi aayega
-          git checkout HEAD -- lib/
-          git checkout HEAD -- pubspec.yaml
+          # 3. THE FIX: Demo code delete karo aur backup se asli code restore karo
+          # Isse demo page kabhi nahi aa sakta
+          rm -rf lib
+          cp -r lib_permanent_backup lib
+          cp pubspec_permanent_backup.yaml pubspec.yaml
           
-          # 3. MainActivity Cleanup
+          # 4. MainActivity Cleanup
           find android/app/src/main -name "MainActivity.*" -delete
           mkdir -p android/app/src/main/kotlin/com/abhimaniu/triverse
           echo 'package com.abhimaniu.triverse
@@ -50,14 +53,14 @@ jobs:
           class MainActivity: FlutterActivity() {
           }' > android/app/src/main/kotlin/com/abhimaniu/triverse/MainActivity.kt
 
-          # 4. Firebase Setup
+          # 5. Firebase Setup
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           
-          # 5. Version Fix
+          # 6. Version Fix
           sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           
-          # 6. Fresh Packages
+          # 7. Get dependencies
           flutter pub get
 
       - name: Build APK
