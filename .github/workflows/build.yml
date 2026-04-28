@@ -12,7 +12,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract and Rename
+      - name: Extract Project
         run: |
           unzip -o TriVerse_Final.zip
           mv TriVerse_Final triverse_final || true
@@ -28,19 +28,21 @@ jobs:
         with:
           flutter-version: '3.19.0'
 
-      - name: Nuclear Fix (Bypass Errors)
+      - name: Solid Restoration
         run: |
           cd triverse_final
           
-          # 1. Design ka backup
+          # 1. Asli premium code ka backup
           cp -r lib lib_backup
+          cp -r pubspec.yaml pubspec_backup.yaml
           
-          # 2. Modern Android Structure
+          # 2. Fresh Android Structure (Fixes Embedding)
           flutter create . --platforms android --overwrite
           
-          # 3. Restore Design
+          # 3. Restore ORIGINAL Premium Code & Pubspec
           rm -rf lib
           mv lib_backup lib
+          cp pubspec_backup.yaml pubspec.yaml
           
           # 4. Modern MainActivity Fix
           FILE_PATH=$(find . -name "MainActivity.kt" -print -quit)
@@ -49,27 +51,21 @@ jobs:
           class MainActivity: FlutterActivity() {
           }' > "$FILE_PATH"
 
-          # 5. ERROR BYPASS (Razorpay & Firebase)
-          # In commands se compiler in errors par nahi rukega
-          sed -i 's/Razorpay/dynamic/g' lib/services/payment_service.dart || true
-          sed -i 's/FirebaseAuth/dynamic/g' lib/services/payment_service.dart || true
-          sed -i 's/FirebaseFunctions/dynamic/g' lib/services/payment_service.dart || true
-          sed -i 's/PaymentSuccessResponse/dynamic/g' lib/services/payment_service.dart || true
-          sed -i 's/PaymentFailureResponse/dynamic/g' lib/services/payment_service.dart || true
-          sed -i 's/MainLayout.of(context)?.switchTab/print/g' lib/screens/home_dashboard.dart || true
-
-          # 6. Firebase Setup
+          # 5. Firebase Setup
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           
-          # 7. SDK Fix
+          # 6. Hard-fix minSdkVersion 21
           sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           
+          # 7. Deep Clean Packages
+          flutter clean
           flutter pub get
 
       - name: Build APK
         run: |
           cd triverse_final
+          # Koi bypass nahi, asli code build karenge
           flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK
