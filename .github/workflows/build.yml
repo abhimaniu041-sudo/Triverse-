@@ -1,4 +1,4 @@
-name: Build TriVerse Final - Folder Fix
+name: Build TriVerse Final - Ultra Fix
 on:
   push:
     branches: [ main ]
@@ -11,32 +11,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Organize Files Automatically
+      - name: Organize Folders & Fix Android V2
         run: |
-          # 1. Zaruri folders banao
+          # 1. Folders Setup
           mkdir -p lib/services
-          mkdir -p android/app/src/main
+          mkdir -p android/app/src/main/kotlin/com/example/triverse
 
-          # 2. Bikhri hui files ko sahi jagah move karo
-          # Lib folder ki files
+          # 2. Files Move karo
           mv main.dart lib/ 2>/dev/null || true
           mv app_state.dart lib/ 2>/dev/null || true
           mv firebase_options.dart lib/ 2>/dev/null || true
           mv *_screen.dart lib/ 2>/dev/null || true
           mv *_hub.dart lib/ 2>/dev/null || true
           mv *_panel.dart lib/ 2>/dev/null || true
-          mv main_layout.dart lib/ 2>/dev/null || true
-
-          # Services folder ki files
           mv support_chat_service.dart lib/services/ 2>/dev/null || true
           mv gemini_service.dart lib/services/ 2>/dev/null || true
-          mv auth_service.dart lib/services/ 2>/dev/null || true
-          mv payment_service.dart lib/services/ 2>/dev/null || true
-          mv firestore_service.dart lib/services/ 2>/dev/null || true
 
-          # Android folder ki files (Agar bahar hain toh)
+          # 3. Android V2 Embedding Fix (Sabse Important)
+          # Agar MainActivity.kt bahar hai, toh use sahi package folder mein dalo
+          mv MainActivity.kt android/app/src/main/kotlin/com/example/triverse/ 2>/dev/null || true
           mv AndroidManifest.xml android/app/src/main/ 2>/dev/null || true
-          mv MainActivity.kt android/app/src/main/ 2>/dev/null || true
 
       - name: Setup Java & Flutter
         uses: actions/setup-java@v4
@@ -46,15 +40,15 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
+          flutter-version: '3.19.0' # Thoda purana version use karte hain stability ke liye
 
       - name: Build APK
         run: |
-          flutter pub get
+          flutter pub upgrade
           flutter build apk --release --no-tree-shake-icons
 
-      - name: Upload Final APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Final-App
+          name: TriVerse-Final-APK
           path: build/app/outputs/flutter-apk/app-release.apk
