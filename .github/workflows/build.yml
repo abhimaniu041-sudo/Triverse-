@@ -28,7 +28,7 @@ jobs:
         with:
           flutter-version: '3.22.0'
 
-      - name: Hard Restoration & Dependency Injection
+      - name: Nuclear Kotlin & Dependency Fix
         run: |
           cd triverse_final
           
@@ -42,9 +42,9 @@ jobs:
           rm -rf lib
           mv lib_permanent_backup lib
           
-          # 4. THE FIX: Force add all missing dependencies directly to pubspec
-          # Isse FirebaseFunctions aur baaki errors (jo screenshot mein hain) khatam ho jayenge
-          flutter pub add firebase_core firebase_auth cloud_firestore cloud_functions google_generative_ai razorpay_flutter fl_chart:0.66.0 provider
+          # 4. THE FIX: Force Modern Kotlin Version
+          # Ye screenshot wale "Incompatible version" error ko jad se khatam karega
+          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.10"/g' android/build.gradle || true
           
           # 5. MainActivity Cleanup
           find android/app/src/main -name "MainActivity.*" -delete
@@ -61,8 +61,8 @@ jobs:
           # 7. SDK Fix (minSdkVersion 21)
           sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           
-          # 8. Clean Sync
-          flutter clean
+          # 8. Force Add Dependencies
+          flutter pub add firebase_core firebase_auth cloud_firestore cloud_functions google_generative_ai razorpay_flutter fl_chart:0.66.0 provider
           flutter pub get
 
       - name: Build APK
@@ -73,5 +73,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Premium-Final
+          name: TriVerse-Final-Working-App
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
