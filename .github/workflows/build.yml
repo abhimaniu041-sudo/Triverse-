@@ -22,40 +22,41 @@ jobs:
         with:
           flutter-version: '3.22.0'
 
-      - name: Manual Kotlin & Gradle Fix
+      - name: Nuclear Kotlin Fix
         run: |
-          # 1. Framework create karo
+          # 1. Framework Fresh Start
           flutter create . --platforms android --overwrite --project-name triverse_app
           
-          # 2. Kotlin version ko manually overwrite karo (Hardcoded fix)
+          # 2. Extract Premium Code
+          unzip -o triverse_final.zip
+          
+          # 3. Force Build.gradle with Latest Kotlin
           cat <<EOF > android/build.gradle
           buildscript {
-              ext.kotlin_version = '1.9.0'
-              repositories {
-                  google()
-                  mavenCentral()
-              }
+              ext.kotlin_version = '1.9.10'
+              repositories { google(); mavenCentral() }
               dependencies {
                   classpath 'com.android.tools.build:gradle:8.1.0'
                   classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:\$kotlin_version"
                   classpath 'com.google.gms:google-services:4.3.15'
               }
           }
-          allprojects {
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-          }
+          allprojects { repositories { google(); mavenCentral() } }
           EOF
 
-          # 3. ZIP Extract karo
-          unzip -o triverse_final.zip
-          
-          # 4. Essential Libraries add karo
-          flutter pub add provider razorpay_flutter firebase_core firebase_auth cloud_functions
+          # 4. Settings.gradle Fix
+          cat <<EOF > android/settings.gradle
+          include ':app'
+          def localPropertiesFile = new File(rootProject.projectDir, "local.properties")
+          def properties = new Properties()
+          assert localPropertiesFile.exists()
+          localPropertiesFile.withReader("UTF-8") { reader -> properties.load(reader) }
+          def flutterSdkPath = properties.getProperty("flutter.sdk")
+          assert flutterSdkPath != null, "flutter.sdk not set in local.properties"
+          apply from: "\$flutterSdkPath/packages/flutter_tools/gradle/app_plugin_loader.gradle"
+          EOF
 
-      - name: Final Build
+      - name: Build APK (Fast)
         run: |
           flutter pub get
           flutter build apk --release --no-tree-shake-icons
