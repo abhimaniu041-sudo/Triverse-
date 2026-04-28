@@ -28,18 +28,21 @@ jobs:
         with:
           flutter-version: '3.19.0'
 
-      - name: Clean & Force Dependencies
+      - name: Restoration & Anti-Demo Fix
         run: |
           cd triverse_final
           
-          # 1. Purani files hatao taaki fresh start ho
-          rm -rf android
-          rm -f pubspec.lock
+          # 1. Tumhare asli PREMIUM code ka backup lo
+          cp -r lib lib_backup
           
-          # 2. Fresh Android Structure (Embedding fix)
+          # 2. Modern Android Structure setup karo (v2 embedding fix karne ke liye)
           flutter create . --platforms android --overwrite
           
-          # 3. Modern MainActivity Fix (Direct Path)
+          # 3. THE FIX: Demo code ko delete karo aur asli code wapas restore karo
+          rm -rf lib
+          mv lib_backup lib
+          
+          # 4. Modern MainActivity Fix (Audioplayers fix)
           find android/app/src/main -name "MainActivity.*" -delete
           mkdir -p android/app/src/main/kotlin/com/abhimaniu/triverse
           echo 'package com.abhimaniu.triverse
@@ -47,22 +50,18 @@ jobs:
           class MainActivity: FlutterActivity() {
           }' > android/app/src/main/kotlin/com/abhimaniu/triverse/MainActivity.kt
 
-          # 4. Firebase Setup
+          # 5. Firebase Setup
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           
-          # 5. SDK Fix (minSdkVersion 21)
+          # 6. SDK Fix (minSdkVersion 21)
           sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           
-          # 6. FORCE RE-INSTALL LIBRARIES
-          # In commands se compiler ko Razorpay aur Firebase mil jayenge
           flutter pub get
-          flutter pub upgrade
 
       - name: Build APK
         run: |
           cd triverse_final
-          # Asli premium code build karenge
           flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK
