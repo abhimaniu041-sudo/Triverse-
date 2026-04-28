@@ -28,26 +28,21 @@ jobs:
         with:
           flutter-version: '3.19.0'
 
-      - name: Fix Embedding & Restore Original Code
+      - name: Final Restoration & Dependency Fix
         run: |
           cd triverse_final
           
-          # 1. Tumhare asli code ka backup lo
+          # 1. Code Backup
           cp -r lib lib_backup
-          cp -r assets assets_backup || true
           
-          # 2. Modern Android structure setup karo (Isse embedding fix hogi)
+          # 2. Modern Android Structure
           flutter create . --platforms android --overwrite
           
-          # 3. Demo code ko hatao aur asli premium code wapas dalo
+          # 3. Restore Premium Design
           rm -rf lib
           mv lib_backup lib
-          if [ -d "assets_backup" ]; then
-            rm -rf assets
-            mv assets_backup assets
-          fi
           
-          # 4. Modern MainActivity Fix (v2 embedding)
+          # 4. Modern MainActivity Fix
           FILE_PATH=$(find . -name "MainActivity.kt" -print -quit)
           echo 'package com.abhimaniu.triverse
           import io.flutter.embedding.android.FlutterActivity
@@ -58,18 +53,22 @@ jobs:
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           
-          # 6. SDK Fix (minSdkVersion 21)
+          # 6. Force SDK Version 21
           sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
-          
+
+          # 7. Deep Clean and Force Link Dependencies
+          flutter clean
           flutter pub get
+          flutter pub upgrade
 
       - name: Build APK
         run: |
           cd triverse_final
+          # Is baar --no-pub nahi use karenge taaki build ke waqt libraries link ho jaye
           flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Premium-Final-Working
+          name: TriVerse-Premium-Final-Fixed
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
