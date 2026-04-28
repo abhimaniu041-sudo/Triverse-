@@ -1,4 +1,4 @@
-name: Scan and Build TriVerse
+name: Build TriVerse Flutter APK
 
 on:
   push:
@@ -15,27 +15,32 @@ jobs:
       - name: Unzip project
         run: unzip -o TriVerse_Final.zip
 
-      - name: Scan Files
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+
+      - name: Create google-services.json
         run: |
-          echo "--- Listing all files to find gradlew ---"
-          find . -maxdepth 4 -name "*"
-          
-      - name: Build Android APK
-        run: |
-          # Dhoondo ki gradlew file hai bhi ya nahi
-          GRADLE_FILE=$(find . -name "gradlew" | head -n 1)
-          if [ -z "$GRADLE_FILE" ]; then
-            echo "Bhai, gradlew file nahi mili! Kya ZIP ke andar android folder hai?"
-            ls -R
-            exit 1
-          fi
-          GRADLE_DIR=$(dirname "$GRADLE_FILE")
-          cd "$GRADLE_DIR"
-          chmod +x gradlew
-          ./gradlew assembleRelease
+          mkdir -p TriVerse_Final/android/app
+          echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > TriVerse_Final/android/app/google-services.json
+
+      - name: Install Dependencies
+        working-directory: ./TriVerse_Final
+        run: flutter pub get
+
+      - name: Build APK
+        working-directory: ./TriVerse_Final
+        run: flutter build apk --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: triverse-release-apk
-          path: "**/build/outputs/apk/release/*.apk"
+          path: TriVerse_Final/build/app/outputs/flutter-apk/app-release.apk
