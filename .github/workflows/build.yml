@@ -28,24 +28,51 @@ jobs:
         with:
           flutter-version: '3.22.0'
 
-      - name: Hardcore Android Fix
+      - name: Total Android System Overwrite
         run: |
           cd triverse_final
           
-          # 1. Asli design backup
+          # 1. Lib backup
           cp -r lib lib_permanent_backup
           
-          # 2. Fresh Android Setup
+          # 2. Fresh Android Structure
           flutter create . --platforms android --overwrite
           
           # 3. Restore ORIGINAL Design
           rm -rf lib
           mv lib_permanent_backup lib
           
-          # 4. THE KOTLIN FIX (Screenshot Error)
-          # Hum manually Kotlin version ko 1.9.10 par set kar rahe hain
-          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.10"/g' android/build.gradle || true
-          
+          # 4. THE KOTLIN FIX (Direct Overwrite)
+          # Hum line-by-line file hi nayi bana rahe hain taaki koi galti na ho
+          echo "buildscript {
+              ext.kotlin_version = '1.9.10'
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+              dependencies {
+                  classpath 'com.android.tools.build:gradle:8.1.0'
+                  classpath \"org.jetbrains.kotlin:kotlin-gradle-plugin:\$kotlin_version\"
+                  classpath 'com.google.gms:google-services:4.3.15'
+              }
+          }
+          allprojects {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.buildDir = '../build'
+          subprojects {
+              project.buildDir = \"\${rootProject.buildDir}/\${project.name}\"
+          }
+          subprojects {
+              project.evaluationDependsOn(':app')
+          }
+          tasks.register(\"clean\", Delete) {
+              delete rootProject.buildDir
+          }" > android/build.gradle
+
           # 5. MainActivity Cleanup
           find android/app/src/main -name "MainActivity.*" -delete
           mkdir -p android/app/src/main/kotlin/com/abhimaniu/triverse
@@ -58,10 +85,10 @@ jobs:
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           
-          # 7. SDK & Gradle Fix
+          # 7. SDK Fix (minSdkVersion 21)
           sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           
-          # 8. Force Add Dependencies
+          # 8. Force Dependencies
           flutter pub add firebase_core firebase_auth cloud_firestore cloud_functions google_generative_ai razorpay_flutter fl_chart:0.66.0 provider
           flutter pub get
 
