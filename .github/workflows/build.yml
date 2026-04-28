@@ -26,14 +26,13 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          # Version thoda stable aur naya use kar rahe hain mismatch rokne ke liye
           flutter-version: '3.22.0'
 
-      - name: Precision Fixes
+      - name: Hard Restoration & Dependency Injection
         run: |
           cd triverse_final
           
-          # 1. Lib backup
+          # 1. Asli design ka backup
           cp -r lib lib_permanent_backup
           
           # 2. Fresh Android Structure
@@ -43,7 +42,11 @@ jobs:
           rm -rf lib
           mv lib_permanent_backup lib
           
-          # 4. Fix Duplicate MainActivity
+          # 4. THE FIX: Force add all missing dependencies directly to pubspec
+          # Isse FirebaseFunctions aur baaki errors (jo screenshot mein hain) khatam ho jayenge
+          flutter pub add firebase_core firebase_auth cloud_firestore cloud_functions google_generative_ai razorpay_flutter fl_chart:0.66.0 provider
+          
+          # 5. MainActivity Cleanup
           find android/app/src/main -name "MainActivity.*" -delete
           mkdir -p android/app/src/main/kotlin/com/abhimaniu/triverse
           echo 'package com.abhimaniu.triverse
@@ -51,18 +54,15 @@ jobs:
           class MainActivity: FlutterActivity() {
           }' > android/app/src/main/kotlin/com/abhimaniu/triverse/MainActivity.kt
 
-          # 5. THE FIX: Force specific versions of problematic libraries
-          # 'fl_chart' ka version fix kar rahe hain taaki 'Color.a' wala error na aaye
-          flutter pub add fl_chart:0.66.0
-          flutter pub add firebase_core firebase_auth cloud_firestore google_generative_ai razorpay_flutter
-
           # 6. Firebase Setup
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           
-          # 7. SDK Fix
+          # 7. SDK Fix (minSdkVersion 21)
           sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           
+          # 8. Clean Sync
+          flutter clean
           flutter pub get
 
       - name: Build APK
