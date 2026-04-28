@@ -1,4 +1,4 @@
-name: Build TriVerse Flutter APK
+name: Build TriVerse Final APK
 
 on:
   push:
@@ -26,33 +26,34 @@ jobs:
         with:
           flutter-version: '3.19.0'
 
-      - name: Firebase & Code Sync
+      - name: Restoration & Firebase Setup
         run: |
-          mv TriVerse_Final triverse_final || true
-          cd triverse_final
+          # Folder ke andar jao
+          cd TriVerse_Final
           
-          # Fresh Android setup but KEEPING original files
-          flutter create . --platforms android --overwrite
+          # Sirf Android structure ko fix karna, original code ko nahi
+          # Agar android folder missing hai ya corrupted hai tabhi naya banega
+          if [ ! -d "android" ]; then
+            flutter create . --platforms android
+          fi
           
-          # Firebase Secret Setup
+          # Firebase JSON Setup
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           
-          # Force copy to build directory
-          cp android/app/google-services.json build/app/ || true
-
-          # MainLayout Fix (Pichli baar wala logic)
-          sed -i 's/MainLayout.of(context)?.switchTab/print/g' lib/screens/home_dashboard.dart || true
-
+          # SDK and Package Fix
+          sed -i 's/minSdkVersion 19/minSdkVersion 21/g' android/app/build.gradle || true
+          
+          # Re-sync original code dependencies
           flutter pub get
 
       - name: Build APK
         run: |
-          cd triverse_final
+          cd TriVerse_Final
           flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Firebase-Fixed
-          path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
+          name: TriVerse-Original-Premium
+          path: 'TriVerse_Final/build/app/outputs/flutter-apk/*.apk'
