@@ -28,30 +28,36 @@ jobs:
         with:
           flutter-version: '3.19.0'
 
-      - name: Hard Fix Versions & Firebase
+      - name: Precision Fix (No Overwrite)
         run: |
           cd triverse_final
           
-          # 1. Fresh Android structure
+          # 1. Lib folder ka backup lo taaki design na mite
+          cp -r lib lib_backup
+          
+          # 2. Sirf Android structure fix karna hai
           flutter create . --platforms android --overwrite
           
-          # 2. Force minSdkVersion to 21 in build.gradle (Hard Fix)
-          sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle
-          sed -i 's/targetSdkVersion .*/targetSdkVersion 34/g' android/app/build.gradle
+          # 3. Lib folder ko wapas asli premium code se replace karo
+          rm -rf lib
+          mv lib_backup lib
           
-          # 3. Modern MainActivity Fix
+          # 4. Modern MainActivity Fix
           FILE_PATH=$(find . -name "MainActivity.kt" -print -quit)
           echo 'package com.abhimaniu.triverse
           import io.flutter.embedding.android.FlutterActivity
           class MainActivity: FlutterActivity() {
           }' > "$FILE_PATH"
 
-          # 4. MainLayout Error Fix
+          # 5. MainLayout Error Fix
           sed -i 's/MainLayout.of(context)?.switchTab/print/g' lib/screens/home_dashboard.dart || true
           
-          # 5. Firebase Setup
+          # 6. Firebase Setup
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
+          
+          # 7. SDK Fix (minSdkVersion 21)
+          sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           
           flutter pub get
 
@@ -63,5 +69,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Final-Working
+          name: TriVerse-Premium-Final
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
