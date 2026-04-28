@@ -28,28 +28,21 @@ jobs:
         with:
           flutter-version: '3.19.0'
 
-      - name: Manual Force Restoration & Fix
+      - name: The Clean Restoration
         run: |
           cd triverse_final
           
-          # 1. Asli Premium code ka backup
+          # 1. Asli premium code ka backup
           cp -r lib lib_permanent_backup
-          cp pubspec.yaml pubspec_permanent_backup.yaml
           
-          # 2. Modern Android setup
+          # 2. Fresh Android Setup (Fixes Embedding)
           flutter create . --platforms android --overwrite
           
-          # 3. Restore ORIGINAL Design
+          # 3. Restore ORIGINAL Design (Anti-Demo Fix)
           rm -rf lib
-          cp -r lib_permanent_backup lib
-          cp pubspec_permanent_backup.yaml pubspec.yaml
+          mv lib_permanent_backup lib
           
-          # 4. THE FIX: Bypass MainLayout & Razorpay Errors
-          sed -i 's/MainLayout.of(context)?.switchTab/print/g' lib/screens/home_dashboard.dart || true
-          sed -i 's/Razorpay/dynamic/g' lib/services/payment_service.dart || true
-          sed -i 's/FirebaseAuth/dynamic/g' lib/services/payment_service.dart || true
-          
-          # 5. MainActivity Cleanup
+          # 4. MainActivity Cleanup (No duplication)
           find android/app/src/main -name "MainActivity.*" -delete
           mkdir -p android/app/src/main/kotlin/com/abhimaniu/triverse
           echo 'package com.abhimaniu.triverse
@@ -57,22 +50,25 @@ jobs:
           class MainActivity: FlutterActivity() {
           }' > android/app/src/main/kotlin/com/abhimaniu/triverse/MainActivity.kt
 
-          # 6. Firebase Setup
+          # 5. Firebase Setup
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           
-          # 7. SDK Fix
+          # 6. SDK Fix (Razorpay requirement)
           sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           
+          # 7. Deep Clean & Sync
+          flutter clean
           flutter pub get
 
       - name: Build APK
         run: |
           cd triverse_final
+          # Seedha build, koi error bypass nahi
           flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Premium-Original-App
+          name: TriVerse-Final-App
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
