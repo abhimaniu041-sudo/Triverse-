@@ -28,7 +28,7 @@ jobs:
         with:
           flutter-version: '3.19.0'
 
-      - name: Nuclear Dependency Injection
+      - name: Nuclear Package Injection
         run: |
           cd triverse_final
           
@@ -42,9 +42,9 @@ jobs:
           rm -rf lib
           mv lib_permanent_backup lib
           
-          # 4. FORCE ADD EVERY MISSING PACKAGE (Screenshot Fix)
-          # Isse Firestore aur Gemini ke errors khatam ho jayenge
-          flutter pub add firebase_core firebase_auth cloud_firestore google_generative_ai razorpay_flutter cloud_functions
+          # 4. THE FIX: Force Add EVERY missing package from your screenshots
+          # Isse Firestore, Gemini, Razorpay aur ab Charts ke errors khatam ho jayenge
+          flutter pub add firebase_core firebase_auth cloud_firestore google_generative_ai razorpay_flutter cloud_functions fl_chart provider
           
           # 5. MainActivity Cleanup
           find android/app/src/main -name "MainActivity.*" -delete
@@ -71,5 +71,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Premium-Original-App
+          name: TriVerse-Premium-Final-Working
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
