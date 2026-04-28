@@ -1,5 +1,62 @@
-- name: Build APK (Ignoring Errors)
+name: Build TriVerse Final - Auto Organizer
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Organize Files (Folder Correction)
+        run: |
+          # 1. Folders banao
+          mkdir -p lib/services
+          mkdir -p android/app/src/main
+
+          # 2. Files ko unki sahi jagah move karo
+          # Lib files
+          mv main.dart lib/ 2>/dev/null || true
+          mv app_state.dart lib/ 2>/dev/null || true
+          mv firebase_options.dart lib/ 2>/dev/null || true
+          mv *_screen.dart lib/ 2>/dev/null || true
+          mv *_hub.dart lib/ 2>/dev/null || true
+          mv *_panel.dart lib/ 2>/dev/null || true
+          mv main_layout.dart lib/ 2>/dev/null || true
+
+          # Services files
+          mv support_chat_service.dart lib/services/ 2>/dev/null || true
+          mv gemini_service.dart lib/services/ 2>/dev/null || true
+          mv auth_service.dart lib/services/ 2>/dev/null || true
+          mv payment_service.dart lib/services/ 2>/dev/null || true
+          mv firestore_service.dart lib/services/ 2>/dev/null || true
+          mv fcm_service.dart lib/services/ 2>/dev/null || true
+          mv zip_service.dart lib/services/ 2>/dev/null || true
+
+          # Android files
+          mv AndroidManifest.xml android/app/src/main/ 2>/dev/null || true
+          mv MainActivity.kt android/app/src/main/ 2>/dev/null || true
+
+      - name: Setup Java & Flutter
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+
+      - name: Build APK
         run: |
           flutter pub get
-          # Ye command errors ke bawajood build karne ki koshish karegi
-          flutter build apk --release --no-tree-shake-icons --no-pub --dart-define=ignore-errors=true || flutter build apk --release --no-tree-shake-icons
+          flutter build apk --release --no-tree-shake-icons
+
+      - name: Upload Final APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: TriVerse-Final-App
+          path: build/app/outputs/flutter-apk/app-release.apk
