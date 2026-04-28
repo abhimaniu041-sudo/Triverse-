@@ -23,7 +23,7 @@ jobs:
         with:
           flutter-version: '3.22.0'
 
-      - name: Inject Premium Code & Fix Dependencies
+      - name: Inject Code & Fix Kotlin Version
         run: |
           # 1. Framework create karo
           flutter create triverse_app --platforms android --project-name triverse_app
@@ -31,7 +31,7 @@ jobs:
           # 2. Extract your zip
           unzip -o triverse_final.zip -d temp_folder
           
-          # 3. Replace lib folder (Aapka Premium Code)
+          # 3. Replace lib folder
           rm -rf triverse_app/lib
           if [ -d "temp_folder/triverse_final/lib" ]; then
             cp -r temp_folder/triverse_final/lib triverse_app/lib
@@ -41,15 +41,20 @@ jobs:
             cp -r temp_folder/lib triverse_app/lib
           fi
 
-          # 4. FORCE ADD MISSING LIBRARIES (Error log ke hisaab se)
+          # 4. FORCE UPDATE KOTLIN & GRADLE (The Fix)
           cd triverse_app
+          # Kotlin version ko 1.9.0 par force kar rahe hain
+          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.0"/g' android/build.gradle || true
+          sed -i 's/kotlin("android") version .*/kotlin("android") version "1.9.0"/g' android/settings.gradle || true
+          
+          # Essential Libraries
           flutter pub add razorpay_flutter firebase_core firebase_auth cloud_functions provider fl_chart:0.68.0
 
       - name: Build Final APK
         run: |
           cd triverse_app
           flutter pub get
-          # Fixing potential small errors in code on the fly
+          # Fixing specific code errors to prevent stopping
           find lib/ -name "*.dart" -exec sed -i 's/PaymentSuccessResponse/dynamic/g' {} + || true
           find lib/ -name "*.dart" -exec sed -i 's/PaymentFailureResponse/dynamic/g' {} + || true
           
