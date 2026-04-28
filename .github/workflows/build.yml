@@ -1,4 +1,4 @@
-name: Build TriVerse APK
+name: Scan and Build TriVerse
 
 on:
   push:
@@ -15,35 +15,21 @@ jobs:
       - name: Unzip project
         run: unzip -o TriVerse_Final.zip
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      - name: Create google-services.json
+      - name: Scan Files
         run: |
-          # Sabse pehle jahan-jahan android/app folder hai, wahan file copy kar do
-          find . -type d -name "app" | grep "android/app" | while read -r path; do
-            echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > "$path/google-services.json"
-            echo "Created json in $path"
-          done
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-
+          echo "--- Listing all files to find gradlew ---"
+          find . -maxdepth 4 -name "*"
+          
       - name: Build Android APK
         run: |
-          # Poori directory mein gradlew dhoondo aur wahi se build chalao
+          # Dhoondo ki gradlew file hai bhi ya nahi
           GRADLE_FILE=$(find . -name "gradlew" | head -n 1)
           if [ -z "$GRADLE_FILE" ]; then
-            echo "Error: gradlew not found anywhere!"
+            echo "Bhai, gradlew file nahi mili! Kya ZIP ke andar android folder hai?"
+            ls -R
             exit 1
           fi
           GRADLE_DIR=$(dirname "$GRADLE_FILE")
-          echo "Found gradlew in $GRADLE_DIR. Starting build..."
           cd "$GRADLE_DIR"
           chmod +x gradlew
           ./gradlew assembleRelease
