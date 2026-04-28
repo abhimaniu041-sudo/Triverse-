@@ -28,22 +28,22 @@ jobs:
         with:
           flutter-version: '3.22.0'
 
-      - name: Nuclear Kotlin & Dependency Fix
+      - name: Hardcore Android Fix
         run: |
           cd triverse_final
           
-          # 1. Asli design ka backup
+          # 1. Asli design backup
           cp -r lib lib_permanent_backup
           
-          # 2. Fresh Android Structure
+          # 2. Fresh Android Setup
           flutter create . --platforms android --overwrite
           
           # 3. Restore ORIGINAL Design
           rm -rf lib
           mv lib_permanent_backup lib
           
-          # 4. THE FIX: Force Modern Kotlin Version
-          # Ye screenshot wale "Incompatible version" error ko jad se khatam karega
+          # 4. THE KOTLIN FIX (Screenshot Error)
+          # Hum manually Kotlin version ko 1.9.10 par set kar rahe hain
           sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.10"/g' android/build.gradle || true
           
           # 5. MainActivity Cleanup
@@ -58,7 +58,7 @@ jobs:
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           
-          # 7. SDK Fix (minSdkVersion 21)
+          # 7. SDK & Gradle Fix
           sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           
           # 8. Force Add Dependencies
