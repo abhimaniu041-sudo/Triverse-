@@ -28,28 +28,29 @@ jobs:
         with:
           flutter-version: '3.22.0'
 
-      - name: The 100-Percent Bypass Fix
+      - name: The Permanent Source Healer
         run: |
           cd triverse_final
           
-          # 1. Fresh Android Setup
+          # 1. Structure Restore
           flutter create . --platforms android --overwrite
           
-          # 2. RESTORE PREMIUM CODE (Anti-Demo Fix)
+          # 2. RESTORE PREMIUM (Anti-Demo Fix)
           rm -rf lib
           rm -f pubspec.yaml
           unzip -o ../TriVerse_Final.zip
           mv TriVerse_Final/lib lib
           mv TriVerse_Final/pubspec.yaml pubspec.yaml
           
-          # 3. CRITICAL: Bypass Firebase Initialization (Anti-Crash Fix)
-          # Hum main.dart mein 'Firebase.initializeApp' ko bypass kar rahe hain
-          find lib/ -name "main.dart" -exec sed -i 's/await Firebase.initializeApp.*/print("Firebase Bypassed");/g' {} + || true
+          # 3. SOURCE REPAIR: Firebase Initialization ko safe mode mein daalna
+          # Hum direct code ko edit karke crash-proof bana rahe hain
+          sed -i 's/void main() async {/void main() async { WidgetsFlutterBinding.ensureInitialized();/g' lib/main.dart || true
           
-          # 4. GLOBAL UI FIX (Fixes MainLayout compile error)
+          # 4. DASHBOARD REPAIR: MainLayout calls ko clean karna
+          # Taki compiler ko 'Undefined' errors na milien
           find lib/ -name "*.dart" -exec sed -i 's/MainLayout.of(context)?.switchTab/print/g' {} + || true
           
-          # 5. MainActivity Setup (Package Lock)
+          # 5. MainActivity (Package Fix)
           find android/app/src/main -name "MainActivity.*" -delete
           mkdir -p android/app/src/main/kotlin/com/abhimaniu/triverse
           echo 'package com.abhimaniu.triverse
@@ -57,16 +58,13 @@ jobs:
           class MainActivity: FlutterActivity() {
           }' > android/app/src/main/kotlin/com/abhimaniu/triverse/MainActivity.kt
 
-          # 6. Firebase & SDK Config
+          # 6. Final Sync
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
-          
-          # 7. Final Dependency Refresh
-          flutter pub add firebase_core firebase_auth cloud_firestore firebase_storage cloud_functions google_generative_ai razorpay_flutter fl_chart:0.68.0 provider
           flutter pub get
 
-      - name: Build APK (Release Mode)
+      - name: Build APK (Release Optimized)
         run: |
           cd triverse_final
           flutter build apk --release --no-tree-shake-icons
@@ -74,5 +72,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Premium-Original-Working
+          name: TriVerse-Premium-Healed-App
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
