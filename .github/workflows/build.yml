@@ -22,41 +22,26 @@ jobs:
         with:
           flutter-version: '3.22.0'
 
-      - name: Nuclear Kotlin Fix
+      - name: Restore & Repair Project
         run: |
-          # 1. Framework Fresh Start
+          # 1. Fresh Framework
           flutter create . --platforms android --overwrite --project-name triverse_app
           
           # 2. Extract Premium Code
           unzip -o triverse_final.zip
           
-          # 3. Force Build.gradle with Latest Kotlin
-          cat <<EOF > android/build.gradle
-          buildscript {
-              ext.kotlin_version = '1.9.10'
-              repositories { google(); mavenCentral() }
-              dependencies {
-                  classpath 'com.android.tools.build:gradle:8.1.0'
-                  classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:\$kotlin_version"
-                  classpath 'com.google.gms:google-services:4.3.15'
-              }
-          }
-          allprojects { repositories { google(); mavenCentral() } }
-          EOF
+          # 3. FIX GRADLE (The precise way)
+          # Hum sirf Kotlin version update karenge, poori file replace nahi karenge
+          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.10"/g' android/build.gradle || true
+          
+          # 4. Add Essential Packages
+          flutter pub add provider razorpay_flutter firebase_core firebase_auth cloud_functions
 
-          # 4. Settings.gradle Fix
-          cat <<EOF > android/settings.gradle
-          include ':app'
-          def localPropertiesFile = new File(rootProject.projectDir, "local.properties")
-          def properties = new Properties()
-          assert localPropertiesFile.exists()
-          localPropertiesFile.withReader("UTF-8") { reader -> properties.load(reader) }
-          def flutterSdkPath = properties.getProperty("flutter.sdk")
-          assert flutterSdkPath != null, "flutter.sdk not set in local.properties"
-          apply from: "\$flutterSdkPath/packages/flutter_tools/gradle/app_plugin_loader.gradle"
-          EOF
-
-      - name: Build APK (Fast)
+      - name: Final Compilation
         run: |
           flutter pub get
+          # Fixing a common Gradle mismatch on the fly
+          cd android
+          ./gradlew clean || true
+          cd ..
           flutter build apk --release --no-tree-shake-icons
