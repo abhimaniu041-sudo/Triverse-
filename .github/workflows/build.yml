@@ -22,37 +22,49 @@ jobs:
         with:
           flutter-version: '3.24.0'
 
-      - name: Force Code Overwrite
+      - name: Manual Force Repair
         run: |
-          # 1. Framework & Cleanup
+          # 1. Clean Slate
           flutter create . --platforms android --overwrite --project-name triverse_app
           rm -rf lib/*
           
-          # 2. Extract & Manually Move Files (Anti-Demo Logic)
+          # 2. Inject Real Code
           unzip -o triverse_final.zip
-          # Agar zip ke andar lib folder hai toh use root lib mein copy karo
           find . -type d -name "lib" -exec cp -r {}/. lib/ \;
           
-          # 3. Fix Libraries (Jo screenshot mein error the)
-          flutter pub add razorpay_flutter firebase_core firebase_auth cloud_functions provider
-          flutter pub get
-
-          # 4. Java-Based Android Fix (Stable Method)
-          rm -rf android/app/src/main/kotlin
-          mkdir -p android/app/src/main/java/com/example/triverse_app/
-          cat <<EOF > android/app/src/main/java/com/example/triverse_app/MainActivity.java
-          package com.example.triverse_app;
-          import io.flutter.embedding.android.FlutterActivity;
-          public class MainActivity extends FlutterActivity {}
+          # 3. FORCE SETTINGS.GRADLE (The real fix for Kotlin error)
+          cat <<EOF > android/settings.gradle
+          pluginManagement {
+              def flutterSdkPath = {
+                  def properties = new Properties()
+                  file("local.properties").withInputStream { properties.load(it) }
+                  return properties.getProperty("flutter.sdk")
+              }()
+              includeBuild("\$flutterSdkPath/packages/flutter_tools/gradle")
+              repositories { google(); mavenCentral(); gradlePluginPortal() }
+          }
+          plugins {
+              id "dev.flutter.flutter-gradle-plugin" version "1.0.0" apply false
+              id "com.android.application" version "8.1.0" apply false
+              id "org.jetbrains.kotlin.android" version "1.9.24" apply false
+          }
+          include ":app"
           EOF
 
-      - name: Final Build
+          # 4. Fix Build.gradle
+          sed -i "s/ext.kotlin_version = .*/ext.kotlin_version = '1.9.24'/g" android/build.gradle || true
+
+          # 5. Fix Cloud Functions version conflict
+          flutter pub add cloud_functions:5.1.0 razorpay_flutter firebase_core firebase_auth provider
+
+      - name: Build APK
         run: |
+          flutter pub get
           cd android && ./gradlew clean && cd ..
           flutter build apk --release --no-tree-shake-icons
 
-      - name: Upload Final APK
+      - name: Upload Verified APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Real-APK
+          name: TriVerse-Pro-Build
           path: build/app/outputs/flutter-apk/*.apk
