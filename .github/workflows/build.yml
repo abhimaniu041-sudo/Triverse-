@@ -26,25 +26,34 @@ jobs:
         with:
           flutter-version: '3.19.0'
 
-      - name: Restoration & Firebase Setup
+      - name: Fix Embedding & Firebase
         run: |
-          # Folder ke andar jao
           cd TriVerse_Final
           
-          # Sirf Android structure ko fix karna, original code ko nahi
-          # Agar android folder missing hai ya corrupted hai tabhi naya banega
-          if [ ! -d "android" ]; then
-            flutter create . --platforms android
+          # 1. Force modern Android structure
+          flutter create . --platforms android --overwrite
+          
+          # 2. Modern MainActivity Fix (v2 embedding)
+          # Ye command dhoond kar MainActivity ko update kar degi
+          FILE_PATH=$(find . -name "MainActivity.kt" -print -quit)
+          if [ -z "$FILE_PATH" ]; then
+            FILE_PATH=$(find . -name "MainActivity.java" -print -quit)
           fi
           
-          # Firebase JSON Setup
+          echo "Updating MainActivity at $FILE_PATH"
+          echo 'package com.abhimaniu.triverse
+
+          import io.flutter.embedding.android.FlutterActivity
+
+          class MainActivity: FlutterActivity() {
+          }' > "$FILE_PATH"
+
+          # 3. Firebase Setup
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           
-          # SDK and Package Fix
+          # 4. Version and Dependencies
           sed -i 's/minSdkVersion 19/minSdkVersion 21/g' android/app/build.gradle || true
-          
-          # Re-sync original code dependencies
           flutter pub get
 
       - name: Build APK
@@ -55,5 +64,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Original-Premium
+          name: TriVerse-Premium-Final
           path: 'TriVerse_Final/build/app/outputs/flutter-apk/*.apk'
