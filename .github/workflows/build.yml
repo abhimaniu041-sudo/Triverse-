@@ -28,41 +28,43 @@ jobs:
         with:
           flutter-version: '3.19.0'
 
-      - name: Final Precision Fix
+      - name: Anti-Crash & Firebase Fix
         run: |
           cd triverse_final
           
-          # 1. Code Backup
+          # 1. Backup lib and assets
           cp -r lib lib_backup
-          cp pubspec.yaml pubspec_backup.yaml
+          cp -r assets assets_backup || true
           
-          # 2. Modern Android Structure
+          # 2. Fresh Android Structure
           flutter create . --platforms android --overwrite
           
-          # 3. THE FIX: Duplicate MainActivity hatao
-          # Hum saari purani MainActivity files delete karke sirf ek fresh wali banayenge
-          find android/app/src/main -name "MainActivity.*" -delete
+          # 3. Restore Premium Design
+          rm -rf lib
+          mv lib_backup lib
+          if [ -d "assets_backup" ]; then
+            rm -rf assets
+            mv assets_backup assets
+          fi
           
-          # 4. Nayi Modern MainActivity banao
+          # 4. MainActivity Fix (Proper Path)
+          find android/app/src/main -name "MainActivity.*" -delete
           mkdir -p android/app/src/main/kotlin/com/abhimaniu/triverse
           echo 'package com.abhimaniu.triverse
           import io.flutter.embedding.android.FlutterActivity
           class MainActivity: FlutterActivity() {
           }' > android/app/src/main/kotlin/com/abhimaniu/triverse/MainActivity.kt
 
-          # 5. Restore Original Design
-          rm -rf lib
-          mv lib_backup lib
-          cp pubspec_backup.yaml pubspec.yaml
-          
-          # 6. MainLayout Error Fix (Safety)
-          sed -i 's/MainLayout.of(context)?.switchTab/print/g' lib/screens/home_dashboard.dart || true
-
-          # 7. Firebase Setup
+          # 5. THE CRASH FIX: Google Services placement
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
+          # Force copy to gradle location
+          cp android/app/google-services.json android/app/src/google-services.json || true
           
-          # 8. SDK Fix
+          # 6. Package Name Sync (Important for Firebase)
+          sed -i 's/com.example.triverse_final/com.abhimaniu.triverse/g' android/app/build.gradle || true
+
+          # 7. SDK Fix (minSdkVersion 21)
           sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           
           flutter pub get
@@ -75,5 +77,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Premium-Original
+          name: TriVerse-Premium-Fixed-Final
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
