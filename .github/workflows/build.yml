@@ -28,28 +28,31 @@ jobs:
         with:
           flutter-version: '3.19.0'
 
-      - name: Final Fixes
+      - name: Precision Fix (No Overwrite)
         run: |
           cd triverse_final
           
-          # 1. Modern Android structure
-          flutter create . --platforms android --overwrite
+          # Sirf Android structure fix karna hai, lib folder ko touch nahi karna
+          flutter create . --platforms android
           
-          # 2. Modern MainActivity Fix
+          # Apni purani main.dart ko wapas restore karna (agar overwrite hui ho)
+          git checkout HEAD -- lib/main.dart || true
+          
+          # Modern MainActivity Fix
           FILE_PATH=$(find . -name "MainActivity.kt" -print -quit)
           echo 'package com.abhimaniu.triverse
           import io.flutter.embedding.android.FlutterActivity
           class MainActivity: FlutterActivity() {
           }' > "$FILE_PATH"
 
-          # 3. MainLayout Error Fix (Is baar path sahi hai)
+          # MainLayout Error Fix
           sed -i 's/MainLayout.of(context)?.switchTab/print/g' lib/screens/home_dashboard.dart || true
           
-          # 4. Firebase Setup
+          # Firebase Setup
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           
-          # 5. SDK Fix
+          # SDK Fix
           sed -i 's/minSdkVersion 19/minSdkVersion 21/g' android/app/build.gradle || true
           
           flutter pub get
@@ -62,5 +65,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Final-App
+          name: TriVerse-Premium-Original
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
