@@ -20,22 +20,13 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install dependencies
-        run: |
-          PACKAGE_PATH=$(find . -name "package.json" -not -path "*/node_modules/*" -print -quit)
-          PACKAGE_DIR=$(dirname "$PACKAGE_PATH")
-          cd "$PACKAGE_DIR"
-          npm install
-
       - name: Create google-services.json
         run: |
-          ANDROID_APP_PATH=$(find . -type d -name "app" | grep "android/app" | head -n 1)
-          if [ -n "$ANDROID_APP_PATH" ]; then
-            echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > "$ANDROID_APP_PATH/google-services.json"
-          else
-            echo "Error: Android app folder not found"
-            exit 1
-          fi
+          # Sabse pehle jahan-jahan android/app folder hai, wahan file copy kar do
+          find . -type d -name "app" | grep "android/app" | while read -r path; do
+            echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > "$path/google-services.json"
+            echo "Created json in $path"
+          done
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -45,8 +36,14 @@ jobs:
 
       - name: Build Android APK
         run: |
-          GRADLE_PATH=$(find . -name gradlew -print -quit)
-          GRADLE_DIR=$(dirname "$GRADLE_PATH")
+          # Poori directory mein gradlew dhoondo aur wahi se build chalao
+          GRADLE_FILE=$(find . -name "gradlew" | head -n 1)
+          if [ -z "$GRADLE_FILE" ]; then
+            echo "Error: gradlew not found anywhere!"
+            exit 1
+          fi
+          GRADLE_DIR=$(dirname "$GRADLE_FILE")
+          echo "Found gradlew in $GRADLE_DIR. Starting build..."
           cd "$GRADLE_DIR"
           chmod +x gradlew
           ./gradlew assembleRelease
@@ -55,4 +52,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: triverse-release-apk
-          path: "**/build/outputs/apk/release/app-release.apk"
+          path: "**/build/outputs/apk/release/*.apk"
