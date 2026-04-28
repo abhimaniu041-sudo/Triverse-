@@ -1,4 +1,4 @@
-name: TriVerse - Ultimate Strong Fix
+name: TriVerse - The Final Victory Build
 on:
   push:
     branches: [ main ]
@@ -11,58 +11,51 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🛠️ AUTO-ORGANIZE & ANDROID V2 PATCH
+      - name: 🛠️ SCRAP OLD & REBUILD NEW
         run: |
-          # 1. Zaruri folders banao (Structure Recovery)
+          # 1. Folders Setup
           mkdir -p lib/services
           mkdir -p android/app/src/main/kotlin/com/example/triverse
 
-          # 2. Bikhri hui files ko sahi jagah move karo (The "Janitor" Mode)
-          mv main.dart lib/ 2>/dev/null || true
-          mv app_state.dart lib/ 2>/dev/null || true
-          mv firebase_options.dart lib/ 2>/dev/null || true
-          mv support_chat_service.dart lib/services/ 2>/dev/null || true
-          mv gemini_service.dart lib/services/ 2>/dev/null || true
-          mv auth_service.dart lib/services/ 2>/dev/null || true
-          mv payment_service.dart lib/services/ 2>/dev/null || true
-          mv firestore_service.dart lib/services/ 2>/dev/null || true
-          mv *_screen.dart lib/ 2>/dev/null || true
-          mv *_hub.dart lib/ 2>/dev/null || true
-          mv *_panel.dart lib/ 2>/dev/null || true
-          mv main_layout.dart lib/ 2>/dev/null || true
+          # 2. Move files to lib
+          mv *.dart lib/ 2>/dev/null || true
+          mv lib/*.dart lib/ 2>/dev/null || true # In case they are already there
+          mv lib/support_chat_service.dart lib/services/ 2>/dev/null || true
+          mv lib/gemini_service.dart lib/services/ 2>/dev/null || true
 
-          # 3. Android V1 to V2 Embedding Force Fix
-          # Nayi MainActivity.kt likho jo V2 support kare
+          # 3. FORCE DELETE OLD ANDROID CONFIGS (The Fix)
+          # Hum purane kachre ko delete kar rahe hain jo V1 embedding ka error de raha hai
+          rm -f android/app/src/main/kotlin/com/example/triverse/MainActivity.kt 2>/dev/null || true
+          
+          # 4. WRITE FRESH V2 MAINACTIVITY
           echo "package com.example.triverse
           import io.flutter.embedding.android.FlutterActivity
           class MainActivity: FlutterActivity() {}" > android/app/src/main/kotlin/com/example/triverse/MainActivity.kt
 
-          # AndroidManifest Patch (Purani lines ko modern lines se badlo)
+          # 5. FORCE PATCH MANIFEST (Strict Version)
+          # Purani lines ko hatane ka sabse pakka tarika
           if [ -f AndroidManifest.xml ]; then
             mv AndroidManifest.xml android/app/src/main/ 2>/dev/null || true
           fi
-          
-          # Force Patch Manifest for V2
           sed -i 's/io.flutter.app.FlutterApplication/${applicationName}/g' android/app/src/main/AndroidManifest.xml || true
-          sed -i '/<application/a \        <meta-data android:name="flutterEmbedding" android:value="2" />' android/app/src/main/AndroidManifest.xml || true
+          
+          # Audioplayers fix: Force modern Android embedding
+          echo 'flutter.minSdkVersion=21' > android/local.properties
+          echo 'flutter.targetSdkVersion=34' >> android/local.properties
 
-      - name: ⚙️ Setup Java & Flutter
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
       - name: 🚀 Setup Flutter (Stable)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.0' # Sabse compatible version
+          flutter-version: '3.19.0'
 
-      - name: 🏗️ Build Final APK
+      - name: 🏗️ Final Build Effort
         run: |
-          flutter pub upgrade  # Plugins (audioplayers etc) ko update karne ke liye
+          flutter pub upgrade --major-versions # Purani plugins (audio) ko force upgrade karo
+          flutter pub get
           flutter build apk --release --no-tree-shake-icons
 
-      - name: 📦 Upload APK Result
+      - name: 📦 Download Link
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Final-Verified-APK
+          name: TriVerse-SUCCESS-APK
           path: build/app/outputs/flutter-apk/app-release.apk
