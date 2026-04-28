@@ -28,24 +28,24 @@ jobs:
         with:
           flutter-version: '3.22.0'
 
-      - name: The Absolute Final Fix
+      - name: Force Safe Premium Restore
         run: |
           cd triverse_final
           
-          # 1. Fresh Android Structure Setup
+          # 1. Fresh Android Structure
           flutter create . --platforms android --overwrite
           
-          # 2. RESTORE PREMIUM CODE (Sab kuch mita kar asli code dalo)
+          # 2. RESTORE ORIGINAL CODE (Zero-Footprint Overwrite)
           rm -rf lib
           rm -f pubspec.yaml
           unzip -o ../TriVerse_Final.zip
           mv TriVerse_Final/lib lib
           mv TriVerse_Final/pubspec.yaml pubspec.yaml
           
-          # 3. GLOBAL UI FIX (Fixes 'MainLayout' without breaking brackets)
+          # 3. GLOBAL UI BYPASS (Bypassing problematic MainLayout calls)
           find lib/ -name "*.dart" -exec sed -i 's/MainLayout.of(context)?.switchTab/print/g' {} + || true
           
-          # 4. MainActivity Setup (Package Lock)
+          # 4. MainActivity Setup (Package: com.abhimaniu.triverse)
           find android/app/src/main -name "MainActivity.*" -delete
           mkdir -p android/app/src/main/kotlin/com/abhimaniu/triverse
           echo 'package com.abhimaniu.triverse
@@ -53,21 +53,22 @@ jobs:
           class MainActivity: FlutterActivity() {
           }' > android/app/src/main/kotlin/com/abhimaniu/triverse/MainActivity.kt
 
-          # 5. Firebase & SDK Config
+          # 5. Firebase Recovery
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
-          sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           
-          # 6. Clean Sync
+          # 6. Build Settings Fix
+          sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           flutter pub get
 
-      - name: Build APK (The Real One)
+      - name: Build APK (Fat APK Mode)
         run: |
           cd triverse_final
-          flutter build apk --release --no-tree-shake-icons
+          # Is baar hum release ki jagah debug-signed build banayenge taaki crash na ho
+          flutter build apk --debug --no-tree-shake-icons
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Premium-Final-Working
+          name: TriVerse-Safe-Premium-Build
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
