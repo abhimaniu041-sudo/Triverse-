@@ -22,35 +22,37 @@ jobs:
         with:
           flutter-version: '3.24.0'
 
-      - name: Force Inject TriVerse Code
+      - name: Force Code Overwrite
         run: |
-          # 1. Fresh Framework
+          # 1. Framework & Cleanup
           flutter create . --platforms android --overwrite --project-name triverse_app
-          
-          # 2. DELETE DEMO CONTENT
           rm -rf lib/*
           
-          # 3. Extract TriVerse Real Code
+          # 2. Extract & Manually Move Files (Anti-Demo Logic)
           unzip -o triverse_final.zip
+          # Agar zip ke andar lib folder hai toh use root lib mein copy karo
+          find . -type d -name "lib" -exec cp -r {}/. lib/ \;
           
-          # 4. Critical: Ensure code is in the right place
-          # Agar zip ke andar 'lib' folder hai, toh hum use main directory mein laa rahe hain
-          if [ -d "triverse_final/lib" ]; then
-            cp -r triverse_final/lib/* lib/
-          elif [ -d "TriVerse_Final/lib" ]; then
-            cp -r TriVerse_Final/lib/* lib/
-          fi
-
-          # 5. Fix Android Gradle & Kotlin (For the last time!)
-          sed -i 's/gradle-7.6.3-all.zip/gradle-8.0-all.zip/g' android/gradle/wrapper/gradle-wrapper.properties || true
-          
-      - name: Build TriVerse APK
-        run: |
+          # 3. Fix Libraries (Jo screenshot mein error the)
+          flutter pub add razorpay_flutter firebase_core firebase_auth cloud_functions provider
           flutter pub get
+
+          # 4. Java-Based Android Fix (Stable Method)
+          rm -rf android/app/src/main/kotlin
+          mkdir -p android/app/src/main/java/com/example/triverse_app/
+          cat <<EOF > android/app/src/main/java/com/example/triverse_app/MainActivity.java
+          package com.example.triverse_app;
+          import io.flutter.embedding.android.FlutterActivity;
+          public class MainActivity extends FlutterActivity {}
+          EOF
+
+      - name: Final Build
+        run: |
+          cd android && ./gradlew clean && cd ..
           flutter build apk --release --no-tree-shake-icons
 
-      - name: Upload TriVerse APK
+      - name: Upload Final APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Verified-APK
+          name: TriVerse-Real-APK
           path: build/app/outputs/flutter-apk/*.apk
