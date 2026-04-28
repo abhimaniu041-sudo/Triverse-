@@ -12,80 +12,36 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract & Sync
+      - name: Extract Repaired ZIP
         run: |
-          unzip -o TriVerse_Final.zip
-          mkdir triverse_app
-          if [ -d "TriVerse_Final/TriVerse_Final" ]; then
-            cp -r TriVerse_Final/TriVerse_Final/* triverse_app/
+          # Sabse safe tarika: Kisi bhi zip file ko dhoondo
+          unzip -o *.zip
+          
+          # Folder structure fix (Small letters ke liye)
+          if [ -d "triverse_final" ]; then
+            cp -r triverse_final/* . || true
           elif [ -d "TriVerse_Final" ]; then
-            cp -r TriVerse_Final/* triverse_app/
+            cp -r TriVerse_Final/* . || true
           fi
 
-      - name: Setup Java
+      - name: Setup Java & Flutter
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.22.0'
 
-      - name: Gemini & AI Source Repair
+      - name: Build Execution
         run: |
-          cd triverse_app
-          # 1. Fresh Framework Setup
+          # Naming conflict khatam karne ke liye project name specify kiya
           flutter create . --platforms android --overwrite --project-name triverse_app
-          
-          # 2. Add Gemini & Firebase Libraries (Essential)
-          flutter pub add google_generative_ai firebase_core firebase_auth cloud_firestore cloud_functions razorpay_flutter provider fl_chart:0.68.0
-          
-          # 3. Fix Gemini Service (Source Repair)
-          # Hum GenerativeModel wale errors ko handle karne ke liye code patch kar rahe hain
-          if [ -f "lib/services/gemini_service.dart" ]; then
-            sed -i 's/GenerativeModel/dynamic/g' lib/services/gemini_service.dart || true
-            sed -i 's/Content.text/dynamic/g' lib/services/gemini_service.dart || true
-          fi
-
-          # 4. Crash-Proof main.dart
-          cat << 'EOF' > lib/main.dart
-          import 'package:flutter/material.dart';
-          import 'screens/home_dashboard.dart';
-          void main() {
-            WidgetsFlutterBinding.ensureInitialized();
-            runApp(const MaterialApp(
-              debugShowCheckedModeBanner: false,
-              home: HomeDashboard(),
-            ));
-          }
-          EOF
-
-          # 5. Global UI Fix
-          find lib/ -name "*.dart" -exec sed -i 's/MainLayout.of(context)?.switchTab/print/g' {} + || true
-          find lib/ -name "*.dart" -exec sed -i 's/MainLayout.of(context)/context/g' {} + || true
-
-          # 6. MainActivity & Firebase Config
-          find android/app/src/main -name "MainActivity.*" -delete
-          mkdir -p android/app/src/main/kotlin/com/abhimaniu/triverse
-          echo 'package com.abhimaniu.triverse
-          import io.flutter.embedding.android.FlutterActivity
-          class MainActivity: FlutterActivity() {
-          }' > android/app/src/main/kotlin/com/abhimaniu/triverse/MainActivity.kt
-
-          mkdir -p android/app
-          echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
-          sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           flutter pub get
-
-      - name: Build APK
-        run: |
-          cd triverse_app
           flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-AI-Premium-App
-          path: 'triverse_app/build/app/outputs/flutter-apk/*.apk'
+          name: TriVerse-Small-Name-Success
+          path: build/app/outputs/flutter-apk/*.apk
