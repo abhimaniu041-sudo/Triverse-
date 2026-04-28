@@ -28,72 +28,25 @@ jobs:
         with:
           flutter-version: '3.22.0'
 
-      - name: Total System Overwrite
+      - name: Final Surgical Fix
         run: |
           cd triverse_final
           
           # 1. Design Backup
           cp -r lib lib_permanent_backup
           
-          # 2. Fresh Android Structure (Ye sab settings mita deta hai)
+          # 2. Fresh Android Structure
           flutter create . --platforms android --overwrite
           
           # 3. Restore ORIGINAL Design
           rm -rf lib
           mv lib_permanent_backup lib
           
-          # 4. THE KOTLIN FIX (Directly Overwriting the problematic file)
-          # Isse line 1863 wala error hamesha ke liye khatam ho jayenge
-          rm -f android/build.gradle
-          cat << 'EOF' > android/build.gradle
-          buildscript {
-              ext.kotlin_version = '1.9.22'
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-              dependencies {
-                  classpath 'com.android.tools.build:gradle:8.1.0'
-                  classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-                  classpath 'com.google.gms:google-services:4.3.15'
-              }
-          }
-          allprojects {
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-          }
-          rootProject.buildDir = '../build'
-          subprojects {
-              project.buildDir = "${rootProject.buildDir}/${project.name}"
-          }
-          subprojects {
-              project.evaluationDependsOn(':app')
-          }
-          tasks.register("clean", Delete) {
-              delete rootProject.buildDir
-          }
-          EOF
-
-          # 5. Settings.gradle Fix (Force stable version)
-          rm -f android/settings.gradle
-          cat << 'EOF' > android/settings.gradle
-          include ':app'
-          def flutterProjectRoot = rootProject.projectDir.parentFile.toPath()
-          def plugins = new Properties()
-          def pluginsFile = new File(flutterProjectRoot.toFile(), '.flutter-plugins')
-          if (pluginsFile.exists()) {
-              pluginsFile.withReader('UTF-8') { reader -> plugins.load(reader) }
-          }
-          plugins.each { name, path ->
-              def pluginDirectory = flutterProjectRoot.resolve(path).resolve('android').toFile()
-              include ":$name"
-              project(":$name").projectDir = pluginDirectory
-          }
-          EOF
-
-          # 6. MainActivity Cleanup
+          # 4. THE KOTLIN & GRADLE FIX (Screenshot Error Solution)
+          # Hum sirf version line badlenge, poori file nahi taaki plugin na khoye
+          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.22"/g' android/build.gradle || true
+          
+          # 5. MainActivity Cleanup
           find android/app/src/main -name "MainActivity.*" -delete
           mkdir -p android/app/src/main/kotlin/com/abhimaniu/triverse
           echo 'package com.abhimaniu.triverse
@@ -101,12 +54,12 @@ jobs:
           class MainActivity: FlutterActivity() {
           }' > android/app/src/main/kotlin/com/abhimaniu/triverse/MainActivity.kt
 
-          # 7. Firebase & SDK Fix
+          # 6. Firebase & SDK Fix
           mkdir -p android/app
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           
-          # 8. Force Dependencies
+          # 7. Package Force-Add
           flutter pub add firebase_core firebase_auth cloud_firestore firebase_storage cloud_functions google_generative_ai razorpay_flutter fl_chart:0.66.0 provider
           flutter pub get
 
@@ -118,5 +71,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Premium-Original-Final
+          name: TriVerse-Premium-Original-App
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
