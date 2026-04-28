@@ -1,43 +1,9 @@
-name: Build TriVerse APK
-
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Unzip project
-        run: unzip -o TriVerse_Final.zip
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      - name: Install dependencies
-        working-directory: ./TriVerse_Final/functions
-        run: npm install
-
-      - name: Create google-services.json
+- name: Build Android APK
         run: |
-          mkdir -p TriVerse_Final/functions/android/app
-          echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > TriVerse_Final/functions/android/app/google-services.json
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-
-      - name: Build Android APK
-        working-directory: ./TriVerse_Final/functions/android
-        run: |
+          # Pehle gradlew file ko dhoondo aur uske folder mein jao
+          GRADLE_PATH=$(find . -name gradlew -print -quit)
+          GRADLE_DIR=$(dirname "$GRADLE_PATH")
+          cd "$GRADLE_DIR"
           chmod +x gradlew
           ./gradlew assembleRelease
 
@@ -45,4 +11,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: triverse-release-apk
-          path: TriVerse_Final/functions/android/app/build/outputs/apk/release/app-release.apk
+          path: "**/build/outputs/apk/release/app-release.apk"
