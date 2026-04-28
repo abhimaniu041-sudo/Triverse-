@@ -12,7 +12,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Unzip project
+      - name: Extract ZIP
         run: unzip -o TriVerse_Final.zip
 
       - name: Setup Java
@@ -24,27 +24,35 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.0' # Stable modern version
+          flutter-version: '3.19.0'
 
-      - name: Create google-services.json
+      - name: Nuclear Fix and Firebase Setup
         run: |
-          mkdir -p TriVerse_Final/android/app
-          echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > TriVerse_Final/android/app/google-services.json
+          # Folder structure sahi karna
+          mv TriVerse_Final triverse_final || true
+          cd triverse_final
+          
+          # Purana android folder hata kar naya fresh setup karna
+          rm -rf android
+          flutter create . --platforms android
+          
+          # Firebase Secret se google-services.json banana
+          mkdir -p android/app
+          echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
+          
+          # SDK Version fix karna (minSdkVersion 21)
+          sed -i 's/minSdkVersion 19/minSdkVersion 21/g' android/app/build.gradle || true
+          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle || true
 
-      - name: Clean and Get Packages
-        working-directory: ./TriVerse_Final
-        run: |
-          flutter clean
           flutter pub get
 
-      - name: Build APK
-        working-directory: ./TriVerse_Final
+      - name: Final Build
         run: |
-          # Ye flag v1 embedding error ko bypass karne ki koshish karega
-          flutter build apk --release --no-tree-shake-icons --ignore-deprecation
+          cd triverse_final
+          flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: triverse-release-apk
-          path: "**/build/app/outputs/flutter-apk/app-release.apk"
+          name: TriVerse-Premium-App
+          path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
