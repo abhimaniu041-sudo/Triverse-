@@ -12,17 +12,30 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract & Build Premium
+      # 1. Sabse pehle Java aur Flutter setup karo (Zaruri!)
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.0'
+
+      # 2. Ab Framework aur Extraction ka kaam ek saath karo
+      - name: Create Framework & Inject Premium Code
         run: |
-          # 1. Sabse pehle framework create karo (Isse demo files banti hain)
+          # Framework banao
           flutter create triverse_app --platforms android --project-name triverse_app
           
-          # 2. Extract your REPAIRED ZIP
+          # Aapka repaired code extract karo
           unzip -o triverse_final.zip -d temp_folder
           
-          # 3. OVERWRITE Demo with YOUR PREMIUM CODE
-          # Hum demo folder ko aapke asli code se replace kar rahe hain
+          # Demo 'lib' hatao aur MT Manager wala 'lib' dalo
           rm -rf triverse_app/lib
+          
+          # Sahi folder dhoond kar copy karo
           if [ -d "temp_folder/triverse_final/lib" ]; then
             cp -r temp_folder/triverse_final/lib triverse_app/lib
           elif [ -d "temp_folder/TriVerse_Final/lib" ]; then
@@ -31,22 +44,14 @@ jobs:
             cp -r temp_folder/lib triverse_app/lib
           fi
 
-      - name: Setup Java & Flutter
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.22.0'
-
-      - name: Final Compilation
+      # 3. Final Build
+      - name: Build Final APK
         run: |
           cd triverse_app
           flutter pub get
           flutter build apk --release --no-tree-shake-icons
 
-      - name: Upload Premium APK
+      - name: Upload Verified Premium APK
         uses: actions/upload-artifact@v4
         with:
           name: TriVerse-Premium-Final
