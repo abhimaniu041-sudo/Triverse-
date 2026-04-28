@@ -1,4 +1,4 @@
-name: Build TriVerse Final APK
+name: Build TriVerse Premium APK
 
 on:
   push:
@@ -12,16 +12,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract Repaired ZIP
+      - name: Extract & Build Premium
         run: |
-          # Sabse safe tarika: Kisi bhi zip file ko dhoondo
-          unzip -o *.zip
+          # 1. Sabse pehle framework create karo (Isse demo files banti hain)
+          flutter create triverse_app --platforms android --project-name triverse_app
           
-          # Folder structure fix (Small letters ke liye)
-          if [ -d "triverse_final" ]; then
-            cp -r triverse_final/* . || true
-          elif [ -d "TriVerse_Final" ]; then
-            cp -r TriVerse_Final/* . || true
+          # 2. Extract your REPAIRED ZIP
+          unzip -o triverse_final.zip -d temp_folder
+          
+          # 3. OVERWRITE Demo with YOUR PREMIUM CODE
+          # Hum demo folder ko aapke asli code se replace kar rahe hain
+          rm -rf triverse_app/lib
+          if [ -d "temp_folder/triverse_final/lib" ]; then
+            cp -r temp_folder/triverse_final/lib triverse_app/lib
+          elif [ -d "temp_folder/TriVerse_Final/lib" ]; then
+            cp -r temp_folder/TriVerse_Final/lib triverse_app/lib
+          else
+            cp -r temp_folder/lib triverse_app/lib
           fi
 
       - name: Setup Java & Flutter
@@ -33,15 +40,14 @@ jobs:
         with:
           flutter-version: '3.22.0'
 
-      - name: Build Execution
+      - name: Final Compilation
         run: |
-          # Naming conflict khatam karne ke liye project name specify kiya
-          flutter create . --platforms android --overwrite --project-name triverse_app
+          cd triverse_app
           flutter pub get
           flutter build apk --release --no-tree-shake-icons
 
-      - name: Upload APK
+      - name: Upload Premium APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Small-Name-Success
-          path: build/app/outputs/flutter-apk/*.apk
+          name: TriVerse-Premium-Final
+          path: triverse_app/build/app/outputs/flutter-apk/*.apk
