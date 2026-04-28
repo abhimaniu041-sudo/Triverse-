@@ -1,4 +1,4 @@
-name: TriVerse Ultimate Recovery Build
+name: TriVerse Final Victory Build
 on:
   push:
     branches: [ main ]
@@ -11,13 +11,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Force Organize Project Structure
+      - name: Force Fix Project Structure
         run: |
-          # 1. Zaruri folders banao
+          # 1. Folders Setup
           mkdir -p lib/services
           mkdir -p android/app/src/main/kotlin/com/example/triverse
 
-          # 2. Files ko unki sahi jagah move karo (Bina Folder ke upload ki hui files)
+          # 2. Files ko unki sahi jagah move karo
           mv main.dart lib/ 2>/dev/null || true
           mv app_state.dart lib/ 2>/dev/null || true
           mv firebase_options.dart lib/ 2>/dev/null || true
@@ -29,18 +29,19 @@ jobs:
           mv *_panel.dart lib/ 2>/dev/null || true
           mv main_layout.dart lib/ 2>/dev/null || true
           mv payment_service.dart lib/services/ 2>/dev/null || true
-          mv firestore_service.dart lib/services/ 2>/dev/null || true
-          mv fcm_service.dart lib/services/ 2>/dev/null || true
-          mv zip_service.dart lib/services/ 2>/dev/null || true
 
-          # 3. Android V1 to V2 Embedding Fix (Auto-Patch)
-          mv MainActivity.kt android/app/src/main/kotlin/com/example/triverse/ 2>/dev/null || true
-          mv AndroidManifest.xml android/app/src/main/ 2>/dev/null || true
+          # 3. Android V2 Embedding Fix (Auto-Patch)
+          # Purani MainActivity hatao aur nayi dalo
+          rm -rf android/app/src/main/kotlin/com/example/triverse/MainActivity.kt
+          echo "package com.example.triverse
+          import io.flutter.embedding.android.FlutterActivity
+          class MainActivity: FlutterActivity() {}" > android/app/src/main/kotlin/com/example/triverse/MainActivity.kt
 
-          # 4. Patch AndroidManifest for V2 Embedding
-          if [ -f android/app/src/main/AndroidManifest.xml ]; then
-            sed -i 's/io.flutter.app.FlutterApplication/${applicationName}/g' android/app/src/main/AndroidManifest.xml
+          # AndroidManifest Patch
+          if [ -f AndroidManifest.xml ]; then
+            mv AndroidManifest.xml android/app/src/main/ 2>/dev/null || true
           fi
+          sed -i 's/io.flutter.app.FlutterApplication/${applicationName}/g' android/app/src/main/AndroidManifest.xml || true
 
       - name: Setup Java & Flutter
         uses: actions/setup-java@v4
@@ -50,15 +51,17 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.0' # Stable for your old structure
+          flutter-version: '3.19.0' # Sabse stable version aapke code ke liye
 
       - name: Build APK
         run: |
           flutter pub get
+          # Purani plugins ko force update karne ke liye
+          flutter pub upgrade
           flutter build apk --release --no-tree-shake-icons
 
       - name: Upload Final APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Final-APK
+          name: TriVerse-Final-App
           path: build/app/outputs/flutter-apk/app-release.apk
