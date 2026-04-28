@@ -22,29 +22,40 @@ jobs:
         with:
           flutter-version: '3.22.0'
 
-      - name: Fast Inject & Kotlin Fix
+      - name: Manual Kotlin & Gradle Fix
         run: |
           # 1. Framework create karo
           flutter create . --platforms android --overwrite --project-name triverse_app
           
-          # 2. ZIP Extract karo
+          # 2. Kotlin version ko manually overwrite karo (Hardcoded fix)
+          cat <<EOF > android/build.gradle
+          buildscript {
+              ext.kotlin_version = '1.9.0'
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+              dependencies {
+                  classpath 'com.android.tools.build:gradle:8.1.0'
+                  classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:\$kotlin_version"
+                  classpath 'com.google.gms:google-services:4.3.15'
+              }
+          }
+          allprojects {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          EOF
+
+          # 3. ZIP Extract karo
           unzip -o triverse_final.zip
-          
-          # 3. KOTLIN FORCE UPDATE (Sabse important step)
-          # Ye line android folder ki build.gradle mein jaakar version update kar degi
-          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.0"/g' android/build.gradle || true
           
           # 4. Essential Libraries add karo
           flutter pub add provider razorpay_flutter firebase_core firebase_auth cloud_functions
 
-      - name: Speed Build APK
+      - name: Final Build
         run: |
           flutter pub get
-          # Fast mode: parallel processing on
-          flutter build apk --release --no-tree-shake-icons --split-per-abi
-
-      - name: Upload Premium APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: TriVerse-Premium-Final
-          path: build/app/outputs/flutter-apk/*.apk
+          flutter build apk --release --no-tree-shake-icons
