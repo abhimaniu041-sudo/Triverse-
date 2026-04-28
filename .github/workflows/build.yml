@@ -28,7 +28,7 @@ jobs:
         with:
           flutter-version: '3.22.0'
 
-      - name: Force System Overwrite
+      - name: Surgical System Overwrite
         run: |
           cd triverse_final
           
@@ -42,9 +42,8 @@ jobs:
           rm -rf lib
           mv lib_permanent_backup lib
           
-          # 4. THE KOTLIN SURGICAL STRIKE (Fixes Screenshot Error)
-          # Purani file delete karke ekdum fresh build.gradle likh rahe hain
-          rm android/build.gradle
+          # 4. THE KOTLIN SURGICAL FIX (Fixes line 582 in screenshot)
+          rm -f android/build.gradle
           cat <<EOF > android/build.gradle
           buildscript {
               ext.kotlin_version = '1.9.10'
@@ -89,8 +88,8 @@ jobs:
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
           sed -i 's/minSdkVersion .*/minSdkVersion 21/g' android/app/build.gradle || true
           
-          # 7. Package Sync
-          flutter pub add firebase_core firebase_auth cloud_firestore cloud_functions google_generative_ai razorpay_flutter fl_chart:0.66.0 provider
+          # 7. Package Sync (Adding Storage to fix line 527 error)
+          flutter pub add firebase_core firebase_auth cloud_firestore firebase_storage cloud_functions google_generative_ai razorpay_flutter fl_chart:0.66.0 provider
           flutter pub get
 
       - name: Build APK
@@ -101,5 +100,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-Final-Success
+          name: TriVerse-Premium-Final
           path: 'triverse_final/build/app/outputs/flutter-apk/*.apk'
