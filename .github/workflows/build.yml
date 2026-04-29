@@ -1,42 +1,44 @@
-name: TriVerse - Final Build Success
+name: TriVerse Build Clean
+
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 🛠️ Force Fix Package Name & SDK
-        run: |
-          # Package name ko 'triverse' (lowercase) set karo
-          sed -i 's/^name: .*/name: triverse/' pubspec.yaml
-          
-          # SDK and Local Properties Fix
-          echo 'flutter.minSdkVersion=21' > android/local.properties
-          echo 'flutter.targetSdkVersion=34' >> android/local.properties
-
-      - name: ⚙️ Setup Java & Flutter
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-      - name: 🚀 Setup Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.0'
+          flutter-version: '3.22.0'
 
-      - name: 🏗️ Build APK
+      - name: Reset Project
         run: |
-          flutter pub get
-          flutter build apk --release --no-tree-shake-icons
+          rm -rf android ios web linux macos windows
+          flutter create temp_app
+          cp -r temp_app/android .
+          cp temp_app/pubspec.yaml .
+          rm -rf temp_app
 
-      - name: 📦 Upload Final APK
+      - name: Fix Name
+        run: |
+          sed -i "s/^name:.*/name: triverse/" pubspec.yaml
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-App
+          name: triverse-apk
           path: build/app/outputs/flutter-apk/app-release.apk
