@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'splash_screen.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(); // Ensure you have firebase_options.dart for full support
+void main() {
   runApp(const TriVerseApp());
 }
 
@@ -14,17 +10,29 @@ class TriVerseApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'TriVerse',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.red,
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
+      title: 'TriVerse',
+      theme: ThemeData.dark(),
+      home: const HomeScreen(),
+    );
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("TriVerse"),
       ),
-      home: const SplashScreen(),
+      body: const Center(
+        child: Text(
+          "🔥 TriVerse Running Successfully",
+          style: TextStyle(fontSize: 18),
+        ),
+      ),
     );
   }
 }
