@@ -1,44 +1,51 @@
-name: TriVerse Build Clean
-
+name: TriVerse - Force Success Build
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Flutter
+      - name: 🛠️ Force Folder & Dependency Fix
+        run: |
+          # 1. Folders ensure karo
+          mkdir -p android/app/src/main/
+          
+          # 2. Manifest agar bahar hai toh sahi jagah dalo
+          if [ -f AndroidManifest.xml ]; then
+            mv AndroidManifest.xml android/app/src/main/
+          fi
+
+          # 3. Local properties manual setup
+          echo 'flutter.minSdkVersion=21' > android/local.properties
+          echo 'flutter.targetSdkVersion=34' >> android/local.properties
+
+      - name: ⚙️ Setup Java & Flutter
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - name: 🚀 Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0'
+          flutter-version: '3.19.0'
+          cache: false # Cache band kiya taaki nayi libraries download hon
 
-      - name: Reset Project
+      - name: 🏗️ Build APK (Force Sync)
         run: |
-          rm -rf android ios web linux macos windows
-          flutter create temp_app
-          cp -r temp_app/android .
-          cp temp_app/pubspec.yaml .
-          rm -rf temp_app
+          flutter clean
+          flutter pub get
+          # Forcefully update packages agar koi mismatch hai
+          flutter pub upgrade --major-versions google_generative_ai firebase_auth
+          flutter build apk --release --no-tree-shake-icons
 
-      - name: Fix Name
-        run: |
-          sed -i "s/^name:.*/name: triverse/" pubspec.yaml
-
-      - name: Install Dependencies
-        run: flutter pub get
-
-      - name: Build APK
-        run: flutter build apk --release
-
-      - name: Upload APK
+      - name: 📦 Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: triverse-apk
+          name: TriVerse-Success-APK
           path: build/app/outputs/flutter-apk/app-release.apk
