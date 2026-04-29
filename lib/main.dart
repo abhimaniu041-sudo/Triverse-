@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-// Baaki imports...
+
+// Agar aapne SplashScreen banaya hai toh uska import yahan aayega
+// import 'splash_screen.dart'; 
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  // Agar Firebase use kar rahe ho toh initialize yahan hoga
   runApp(const MyApp());
 }
 
@@ -15,8 +16,21 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'TriVerse',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(), // Aapka premium dark theme
-      home: const SplashScreen(), // Ya jo bhi aapka pehla screen hai
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        primaryColor: Colors.black,
+        scaffoldBackgroundColor: Colors.black,
+      ),
+      // Yahan home mein wo screen dalo jo aapne banayi hai
+      // Agar SplashScreen nahi mil raha toh Placeholder use karo temporary
+      home: const Scaffold(
+        body: Center(
+          child: Text(
+            'TriVerse Loading...',
+            style: TextStyle(color: Colors.red, fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
     );
   }
 }
