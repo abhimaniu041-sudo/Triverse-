@@ -1,4 +1,5 @@
-name: TriVerse - Auto Manifest Fix
+name: Build TriVerse APK
+
 on:
   push:
     branches: [ main ]
@@ -7,48 +8,30 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 🛠️ Auto-Patch Manifest (No Manual Work)
-        run: |
-          # 1. Check karo ki file sahi jagah par hai ya move karo
-          if [ -f AndroidManifest.xml ]; then
-            mkdir -p android/app/src/main/
-            mv AndroidManifest.xml android/app/src/main/
-          fi
-
-          # 2. Manifest ke andar ki purani lines ko badlo
-          MANIFEST_PATH="android/app/src/main/AndroidManifest.xml"
-          
-          if [ -f "$MANIFEST_PATH" ]; then
-            # Purani application class ko naye format se badlo
-            sed -i 's/android:name="io.flutter.app.FlutterApplication"/android:name="${applicationName}"/g' $MANIFEST_PATH
-            
-            # Agar 'flutterEmbedding' line nahi hai, toh use add karo
-            if ! grep -q "flutterEmbedding" "$MANIFEST_PATH"; then
-              sed -i '/<application/a \        <meta-data android:name="flutterEmbedding" android:value="2" />' $MANIFEST_PATH
-            fi
-          fi
-
-      - name: ⚙️ Setup Java & Flutter
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-      - name: 🚀 Setup Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.0'
+          flutter-version: '3.22.0'
 
-      - name: 🏗️ Build APK
+      # 🔥 AUTO FIX ANDROID ISSUES
+      - name: Fix Android Embedding
         run: |
-          flutter pub get
-          flutter build apk --release --no-tree-shake-icons
+          rm -rf android
+          flutter create .
 
-      - name: 📦 Download Link
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TriVerse-AutoFixed-APK
+          name: triverse-apk
           path: build/app/outputs/flutter-apk/app-release.apk
