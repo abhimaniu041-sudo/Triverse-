@@ -11,16 +11,13 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _navigateToLogin();
-  }
-
-  _navigateToLogin() async {
-    await Future.delayed(const Duration(seconds: 3));
-    if (mounted) {
-      Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => const LoginScreen())
-      );
-    }
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => const LoginScreen())
+        );
+      }
+    });
   }
 
   @override
@@ -29,7 +26,7 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Colors.black,
       body: Center(
         child: Text('TRIVERSE', 
-          style: TextStyle(color: Colors.red, fontSize: 40, fontWeight: FontWeight.bold, letterSpacing: 5)),
+          style: TextStyle(color: Colors.red, fontSize: 42, fontWeight: FontWeight.bold, letterSpacing: 8)),
       ),
     );
   }
