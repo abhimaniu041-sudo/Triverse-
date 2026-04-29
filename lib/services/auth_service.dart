@@ -1,24 +1,31 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Login Method
-  Future<void> login(BuildContext context, String email, String password) async {
+  Future<User?> signup(String email, String password) async {
     try {
-      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      final res = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return res.user;
     } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message ?? "Error")));
+      print(e.message);
+      return null;
     }
   }
 
-  // Signup Method (Jo error aa raha tha)
-  Future<void> signup(BuildContext context, String email, String password) async {
+  Future<User?> login(String email, String password) async {
     try {
-      await _auth.createUserWithEmailAndPassword(email: email, password: password);
+      final res = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return res.user;
     } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message ?? "Error")));
+      print(e.message);
+      return null;
     }
   }
 }
