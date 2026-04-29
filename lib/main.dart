@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
-// Yahan apne screens ko import karo (Check karo ki file name yahi hain na)
+
+// Inka address badal gaya hai, isliye 'services/' lagana zaroori hai
+import 'services/auth_service.dart';
+import 'services/gemini_service.dart';
+import 'services/support_chat_service.dart';
+
+// Screens usi folder mein hain toh ye seedha rahega
 import 'login_screen.dart'; 
 import 'home_dashboard.dart';
+import 'splash_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,13 +23,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'TriVerse',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: Colors.black,
-        primaryColor: Colors.red, // Gaming theme
-      ),
-      // 'Loading' Text hata kar asli LoginScreen yahan dalo
-      home: const LoginScreen(), 
+      theme: ThemeData.dark(), // Premium Gaming Look
+      home: const SplashScreen(), // Pehle Splash dikhao
     );
   }
 }
