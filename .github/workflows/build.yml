@@ -1,5 +1,4 @@
-name: Build TriVerse APK
-
+name: TriVerse - The Final Strong Build
 on:
   push:
     branches: [ main ]
@@ -8,30 +7,55 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Flutter
+      - name: 🛠️ AUTO-FIX & ORGANIZE
+        run: |
+          # 1. Folders Setup
+          mkdir -p lib/services
+          mkdir -p android/app/src/main/
+
+          # 2. Files Organize (Jo bahar hain unhe lib mein dalo)
+          mv *.dart lib/ 2>/dev/null || true
+          mv lib/support_chat_service.dart lib/services/ 2>/dev/null || true
+          mv lib/gemini_service.dart lib/services/ 2>/dev/null || true
+
+          # 3. ANDROID V2 EMBEDDING AUTO-PATCH
+          if [ -f AndroidManifest.xml ]; then
+            mv AndroidManifest.xml android/app/src/main/
+          fi
+
+          MANIFEST_PATH="android/app/src/main/AndroidManifest.xml"
+          
+          if [ -f "$MANIFEST_PATH" ]; then
+            # Application name fix
+            sed -i 's/android:name="io.flutter.app.FlutterApplication"/android:name="${applicationName}"/g' $MANIFEST_PATH
+            # V2 Embedding meta-data force add karo
+            if ! grep -q "flutterEmbedding" "$MANIFEST_PATH"; then
+              sed -i '/<application/a \        <meta-data android:name="flutterEmbedding" android:value="2" />' $MANIFEST_PATH
+            fi
+          fi
+
+      - name: ⚙️ Setup Java & Flutter
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          
+      - name: 🚀 Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0'
+          flutter-version: '3.19.0'
 
-      # 🔥 AUTO FIX ANDROID ISSUES
-      - name: Fix Android Embedding
+      - name: 🏗️ Run Final Build
         run: |
-          rm -rf android
-          flutter create .
+          flutter pub get
+          flutter build apk --release --no-tree-shake-icons
 
-      - name: Install Dependencies
-        run: flutter pub get
-
-      - name: Build APK
-        run: flutter build apk --release
-
-      - name: Upload APK
+      - name: 📦 Download Final APK
         uses: actions/upload-artifact@v4
         with:
-          name: triverse-apk
+          name: TriVerse-APK
           path: build/app/outputs/flutter-apk/app-release.apk
