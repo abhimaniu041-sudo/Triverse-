@@ -1,4 +1,4 @@
-name: TriVerse - Manual Victory
+name: TriVerse - Ultimate Recovery Build
 on:
   push:
     branches: [ main ]
@@ -8,19 +8,60 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup Java
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🛠️ Auto-Organize & Patch Structure
+        run: |
+          # 1. Zaruri folders banao
+          mkdir -p lib/services
+          mkdir -p android/app/src/main/kotlin/com/example/triverse
+
+          # 2. Bikhri hui files ko sahi jagah move karo
+          # (Aapne lib bana diya hai, toh ye bachi hui files ko andar khich lega)
+          mv *.dart lib/ 2>/dev/null || true
+          mv lib/support_chat_service.dart lib/services/ 2>/dev/null || true
+          mv lib/gemini_service.dart lib/services/ 2>/dev/null || true
+          mv lib/auth_service.dart lib/services/ 2>/dev/null || true
+          mv lib/firestore_service.dart lib/services/ 2>/dev/null || true
+
+          # 3. Android V1 to V2 Force Fix
+          # Purani MainActivity ko delete karke nayi V2 wali likho
+          rm -f android/app/src/main/kotlin/com/example/triverse/MainActivity.kt 2>/dev/null || true
+          echo "package com.example.triverse
+          import io.flutter.embedding.android.FlutterActivity
+          class MainActivity: FlutterActivity() {}" > android/app/src/main/kotlin/com/example/triverse/MainActivity.kt
+
+          # AndroidManifest Patch (Purani lines ko modern lines se badlo)
+          if [ -f AndroidManifest.xml ]; then
+            mv AndroidManifest.xml android/app/src/main/ 2>/dev/null || true
+          fi
+          
+          # Force Patch Manifest
+          sed -i 's/io.flutter.app.FlutterApplication/${applicationName}/g' android/app/src/main/AndroidManifest.xml || true
+          
+          # Audioplayers/Gradle Fix
+          echo 'flutter.minSdkVersion=21' > android/local.properties
+          echo 'flutter.targetSdkVersion=34' >> android/local.properties
+
+      - name: ⚙️ Setup Java & Flutter
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
-      - uses: subosito/flutter-action@v2
+      - name: 🚀 Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.19.0'
-      - run: |
+
+      - name: 🏗️ Build Final APK
+        run: |
+          flutter pub upgrade --major-versions
           flutter pub get
           flutter build apk --release --no-tree-shake-icons
-      - uses: actions/upload-artifact@v4
+
+      - name: 📦 Download Link
+        uses: actions/upload-artifact@v4
         with:
           name: TriVerse-Final-APK
-          path: build/app/outputs/flutter-apk/*.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
