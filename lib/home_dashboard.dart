@@ -9,10 +9,15 @@ class HomeDashboard extends StatelessWidget {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: const Text('TRIVERSE DASHBOARD', 
-          style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, letterSpacing: 2)),
+        title: const Text(
+          'TRIVERSE DASHBOARD',
+          style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, letterSpacing: 2),
+        ),
         actions: [
-          IconButton(icon: const Icon(Icons.notifications, color: Colors.red), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.notifications, color: Colors.red),
+            onPressed: () {},
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -20,23 +25,20 @@ class HomeDashboard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Welcome, Commander', 
-              style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+            const Text(
+              'Welcome, Commander',
+              style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 20),
-            
-            // Stats Row
             Row(
               children: [
                 _buildStatCard('Active Users', '1,234', Icons.people),
                 _buildStatCard('Security', 'Safe', Icons.security),
               ],
             ),
-            
             const SizedBox(height: 20),
             const Text('Quick Actions', style: TextStyle(color: Colors.grey, fontSize: 18)),
             const SizedBox(height: 10),
-            
-            // Feature Grid
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -56,6 +58,7 @@ class HomeDashboard extends StatelessWidget {
     );
   }
 
+  // In functions ko Class ke andar hona chahiye
   Widget _buildStatCard(String title, String value, IconData icon) {
     return Expanded(
       child: Container(
