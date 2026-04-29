@@ -4,7 +4,7 @@ import 'splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(); // Firebase initialize zaroori hai
+  await Firebase.initializeApp(); // Ensure you have firebase_options.dart for full support
   runApp(const TriVerseApp());
 }
 
@@ -18,9 +18,13 @@ class TriVerseApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
-        primarySwatch: Colors.red,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.red,
+          brightness: Brightness.dark,
+        ),
+        useMaterial3: true,
       ),
-      home: const SplashScreen(), // Sabse pehle splash dikhega
+      home: const SplashScreen(),
     );
   }
 }
