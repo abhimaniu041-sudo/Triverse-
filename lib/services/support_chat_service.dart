@@ -2,18 +2,20 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 import 'gemini_service.dart';
 
 class SupportChatService {
-  late final GenerativeModel _model;
+  final GenerativeModel _model;
 
-  SupportChatService() {
-    _model = GenerativeModel(
-      model: 'gemini-1.5-flash',
-      apiKey: GeminiService.apiKey,
-    );
-  }
+  SupportChatService() : _model = GenerativeModel(
+    model: 'gemini-1.5-flash',
+    apiKey: GeminiService.apiKey,
+  );
 
   Future<String> sendMessage(String userText) async {
-    final content = [Content.text(userText)];
-    final response = await _model.generateContent(content);
-    return response.text ?? 'Error';
+    try {
+      final content = [Content.text(userText)];
+      final response = await _model.generateContent(content);
+      return response.text ?? 'Error: No response';
+    } catch (e) {
+      return "Chat Error: $e";
+    }
   }
 }
