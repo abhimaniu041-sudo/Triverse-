@@ -3,14 +3,18 @@ description: TriVerse - Premium AI Creation Hub
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
+
   firebase_core: ^2.24.2
   firebase_auth: ^4.13.2
   firebase_messaging: ^14.7.10
   google_generative_ai: ^0.4.0
   lottie: ^3.0.0
   cupertino_icons: ^1.0.2
+
+flutter:
+  uses-material-design: true
